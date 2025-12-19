@@ -1,4 +1,4 @@
-import { useEffect, useRef, RefObject, useCallback } from "react";
+import { useEffect, useRef, RefObject, useCallback, DependencyList } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -7,7 +7,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export function useGSAP(
   callback: (context: gsap.Context) => void,
-  dependencies: any[] = []
+  dependencies: DependencyList = []
 ) {
   const contextRef = useRef<gsap.Context | null>(null);
 
@@ -17,10 +17,12 @@ export function useGSAP(
     return () => {
       contextRef.current?.revert();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
-
-  return contextRef.current;
 }
+
+const DEFAULT_FROM = { x: -100, opacity: 0 };
+const DEFAULT_TO = { x: 0, opacity: 1 };
 
 export function useStaggerAnimation(
   elements: RefObject<HTMLElement>[],
@@ -39,8 +41,8 @@ export function useStaggerAnimation(
     delay = 0,
     duration = 1,
     ease = "power3.out",
-    from = { x: -100, opacity: 0 },
-    to = { x: 0, opacity: 1 },
+    from = DEFAULT_FROM,
+    to = DEFAULT_TO,
     trigger,
   } = options;
 
@@ -74,7 +76,7 @@ export function useStaggerAnimation(
     });
 
     return ctx;
-  }, [elements, stagger, delay, duration, ease, trigger]);
+  }, [elements, stagger, delay, duration, ease, trigger, from, to]);
 
   useEffect(() => {
     const ctx = animateElements();
@@ -141,5 +143,5 @@ export function useFadeInAnimation(
     });
 
     return () => ctx.revert();
-  }, [direction, distance, duration, delay, trigger]);
+  }, [direction, distance, duration, delay, trigger, elementRef]);
 }
