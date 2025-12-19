@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useTheme } from 'next-themes';
 
 interface BackgroundProps {
   children?: ReactNode;
@@ -40,13 +39,14 @@ function LightBackground() {
 
 
 export default function Background({ children }: BackgroundProps) {
-  const { resolvedTheme } = useTheme();
-
-  const isDark = resolvedTheme === 'dark';
-
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {isDark ? <DarkBackground /> : <LightBackground />}
+      <div className="hidden dark:block">
+        <DarkBackground />
+      </div>
+      <div className="block dark:hidden">
+        <LightBackground />
+      </div>
       <div className="relative z-10">
         {children}
       </div>

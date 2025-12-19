@@ -272,7 +272,7 @@ export const ThemeToggleButton3 = ({
 }: {
   className?: string;
 }) => {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -281,7 +281,7 @@ export const ThemeToggleButton3 = ({
 
   if (!mounted) return null;
 
-  const isDark = theme === "dark";
+  const isDark = resolvedTheme === "dark";
   return (
     <button
       type="button"
