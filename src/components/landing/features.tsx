@@ -64,7 +64,7 @@ export default function Features() {
             <div className="@container mx-auto max-w-5xl px-6">
             <div className="text-center">
                 <div ref={headerRef}>
-                    <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-linear-to-r from-blue-700 via-blue-600 to-indigo-700 dark:from-blue-400 dark:via-blue-300 dark:to-indigo-400 bg-clip-text text-transparent">Built to cover your needs</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold pb-6 bg-linear-to-r from-blue-700 via-blue-600 to-indigo-700 dark:from-blue-400 dark:via-blue-300 dark:to-indigo-400 bg-clip-text text-transparent">Built to cover your needs</h1>
                     <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">All in one platform for storing and managing what you want to read</p>
                 </div>
             </div>

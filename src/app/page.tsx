@@ -1,6 +1,7 @@
 "use client";
 
 import HeroGeometric from "../components/landing/hero";
+import React from "react";
 import { ThemeToggleButton3 } from "../theme/toggle-theme";
 import PillNav from "../components/landing/pill-nav";
 import { motion , AnimatePresence } from "framer-motion";
@@ -12,11 +13,13 @@ import Background from "../components/ui/background";
 import { useState, useEffect } from "react";
 import FAQsTwo from "../components/landing/faq";
 import { Footer } from "../components/landing/footer";
+import { CTA } from "../components/landing/cta";
+import { useScroll, useTransform } from "motion/react";
 
 export default function Home() {
 
   const {navigate, isNavigating} = usePageTransition();
-  const [activeHref, setActiveHref] = useState("/");
+  const [activeHref, setActiveHref] = useState("#home");
 
   useEffect(() => {
     const sections = document.querySelectorAll('section[id]');
@@ -44,12 +47,32 @@ export default function Home() {
     const handleGetStarted = () => {
     navigate("/auth");
   };
+
   const navItems = [
     { label: 'Home', href: '#home' },
     { label: 'Features', href: '#features' },
     { label: 'FAQ', href: '#faq' },
-    { label: 'Signup', href: '#get-started' }
+    { label: 'Login', href: '/auth' }
   ];
+
+  const ref = React.useRef(null);
+  const ctaRef = React.useRef(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+
+  const { scrollYProgress: ctaScrollYProgress } = useScroll({
+    target: ctaRef,
+    offset: ["start end", "end start"],
+  });
+
+  const pathLengthFirst = useTransform(ctaScrollYProgress, [0.1, 0.8], [0, 1.2]);
+  const pathLengthSecond = useTransform(ctaScrollYProgress, [0.1, 0.8], [0, 1.2]);
+  const pathLengthThird = useTransform(ctaScrollYProgress, [0.1, 0.8], [0, 1.2]);
+  const pathLengthFourth = useTransform(ctaScrollYProgress, [0.1, 0.8], [0, 1.2]);
+  const pathLengthFifth = useTransform(ctaScrollYProgress, [0.1, 0.8], [0, 1.2]);
 
   return (
     <>
@@ -87,17 +110,33 @@ export default function Home() {
           ease="power2.easeOut"
         />
         <ThemeToggleButton3 className="fixed top-4 right-4 z-50 size-8 p-2" />
-        <main className="scroll-container">
+        <main className="scroll-container" ref={ref}>
           <section id="home" className="w-full overflow-hidden">
             <GeometricShapesLayer/>
-            <HeroGeometric />
+            <HeroGeometric isNavigating={isNavigating} />
           </section>
+
           <section id="features" className= "relative z-10">
             <Features/>
           </section>
+
           <section id="faq" className= "relative z-10">
             <FAQsTwo/>
           </section>
+
+          <section id="get-started" ref={ctaRef} className= "relative z-10 mb-20">
+            <CTA
+              pathLengths={[
+                  pathLengthFirst,
+                  pathLengthSecond,
+                  pathLengthThird,
+                  pathLengthFourth,
+                  pathLengthFifth,
+              ]}
+              onGetStarted={handleGetStarted}
+            />
+          </section>
+
           <section id="footer" className= "relative z-10">
             <Footer/>
           </section>

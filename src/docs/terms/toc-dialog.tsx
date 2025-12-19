@@ -34,15 +34,15 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(640px,80vh)] sm:max-w-lg [&>button:last-child]:top-3.5 backdrop-blur-sm border border-zinc-400/60 dark:border-zinc-600/20 rounded-2xl shadow-[4px_8px_12px_2px_rgba(0,0,0,0.2)] bg-white dark:bg-[rgb(53,53,53)]">
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(640px,80vh)] sm:max-w-lg [&>button:last-child]:top-3.5 backdrop-blur-sm border border-border rounded-2xl shadow-lg bg-background text-foreground">
         <DialogHeader className="contents space-y-0 text-left">
-          <DialogTitle className="border-b border-zinc-200/60 dark:border-zinc-800/60 px-6 py-4 text-base">
+          <DialogTitle className="border-b border-border px-6 py-4 text-base font-sans">
             Terms & Conditions
           </DialogTitle>
           <div
             ref={contentRef}
             onScroll={handleScroll}
-            className="overflow-y-auto"
+            className="overflow-y-auto font-sans"
           >
             <DialogDescription asChild>
               <div className="px-6 py-4">
@@ -53,10 +53,10 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                         <strong>Acceptance of Terms</strong>
                       </p>
                       <p>
-                        By accessing and using this website, users agree to
+                        By accessing and using Zapnote, users agree to
                         comply with and be bound by these Terms of Service.
                         Users who do not agree with these terms should
-                        discontinue use of the website immediately.
+                        discontinue use of Zapnote immediately.
                       </p>
                     </div>
 
@@ -67,9 +67,9 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                       <p>
                         Users are responsible for maintaining the
                         confidentiality of their account credentials. Any
-                        activities occurring under a user&lsquo;s account are
+                        activities occurring under a user&apos;s account are
                         the sole responsibility of the account holder. Users
-                        must notify the website administrators immediately of
+                        must notify Zapnote administrators immediately of
                         any unauthorized account access.
                       </p>
                     </div>
@@ -79,11 +79,11 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                         <strong>Content Usage and Restrictions</strong>
                       </p>
                       <p>
-                        The website and its original content are protected by
+                        Zapnote and its original content are protected by
                         intellectual property laws. Users may not reproduce,
                         distribute, modify, create derivative works, or
                         commercially exploit any content without explicit
-                        written permission from the website owners.
+                        written permission from Zapnote&apos;s owners.
                       </p>
                     </div>
 
@@ -92,8 +92,8 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                         <strong>Limitation of Liability</strong>
                       </p>
                       <p>
-                        The website provides content &ldquo;as is&ldquo; without
-                        any warranties. The website owners shall not be liable
+                        Zapnote provides content &ldquo;as is&rdquo; without
+                        any warranties. Zapnote&apos;s owners shall not be liable
                         for direct, indirect, incidental, consequential, or
                         punitive damages arising from user interactions with the
                         platform.
@@ -108,7 +108,7 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                         <li>Not upload harmful or malicious content</li>
                         <li>Respect the rights of other users</li>
                         <li>
-                          Avoid activities that could disrupt website
+                          Avoid activities that could disrupt Zapnote
                           functionality
                         </li>
                         <li>
@@ -122,8 +122,8 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                         <strong>Modifications to Terms</strong>
                       </p>
                       <p>
-                        The website reserves the right to modify these terms at
-                        any time. Continued use of the website after changes
+                        Zapnote reserves the right to modify these terms at
+                        any time. Continued use of Zapnote after changes
                         constitutes acceptance of the new terms.
                       </p>
                     </div>
@@ -133,7 +133,7 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                         <strong>Termination Clause</strong>
                       </p>
                       <p>
-                        The website may terminate or suspend user access without
+                        Zapnote may terminate or suspend user access without
                         prior notice for violations of these terms or for any
                         other reason deemed appropriate by the administration.
                       </p>
@@ -145,7 +145,7 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
                       </p>
                       <p>
                         These terms are governed by the laws of the jurisdiction
-                        where the website is primarily operated, without regard
+                        where Zapnote is primarily operated, without regard
                         to conflict of law principles.
                       </p>
                     </div>
@@ -155,19 +155,19 @@ export default function TocDialog({ open, onOpenChange }: TocDialogProps) {
             </DialogDescription>
           </div>
         </DialogHeader>
-        <DialogFooter className="border-t border-zinc-200/60 dark:border-zinc-800/60 px-6 py-4 sm:items-center">
+        <DialogFooter className="border-t border-border px-6 py-4 sm:items-center">
           {!hasReadToBottom && (
             <span className="text-muted-foreground grow text-xs max-sm:text-center">
               Read all terms before accepting.
             </span>
           )}
           <DialogClose asChild>
-            <Button type="button" variant="outline" className="bg-slate-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-600 hover:bg-slate-200 dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100">
+            <Button type="button" variant="outline" className="bg-secondary text-secondary-foreground border-border hover:bg-secondary/80">
               Cancel
             </Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button type="button" disabled={!hasReadToBottom} className="bg-blue-600 dark:bg-zinc-600 text-white dark:text-zinc-100 hover:bg-blue-700 dark:hover:bg-zinc-500 disabled:bg-slate-300 dark:disabled:bg-zinc-800 disabled:text-slate-500 dark:disabled:text-zinc-400">
+            <Button type="button" disabled={!hasReadToBottom} className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground">
               I agree
             </Button>
           </DialogClose>

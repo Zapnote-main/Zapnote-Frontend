@@ -73,20 +73,20 @@ export function Footer() {
             <a 
               href="#privacy" 
               onClick={(e) => { e.preventDefault(); setIsPrivacyOpen(true); }}
-              className="text-muted-foreground hover:text-accent text-sm transition-colors"
+              className="text-muted-foreground hover:text-primary text-sm transition-colors"
             >
               Privacy Policy
             </a>
             <a 
               href="#terms" 
               onClick={(e) => { e.preventDefault(); setIsTocOpen(true); }} 
-              className="text-muted-foreground hover:text-accent text-sm transition-colors">
+              className="text-muted-foreground hover:text-primary text-sm transition-colors">
               Terms of Service
             </a>
             <a 
               href="#cookies" 
               onClick={(e) => { e.preventDefault(); setIsCookieOpen(true); }}
-              className="text-muted-foreground hover:text-accent text-sm transition-colors"
+              className="text-muted-foreground hover:text-primary text-sm transition-colors"
             >
               Cookie Policy
             </a>

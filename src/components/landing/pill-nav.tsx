@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { useTheme } from 'next-themes';
+import { motion, useScroll, useMotionValueEvent } from "motion/react";
 
 export type PillNavItem = {
   label: string;
@@ -62,8 +63,39 @@ const PillNav: React.FC<PillNavProps> = ({
   const logoRef = useRef<HTMLAnchorElement | HTMLElement | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const id = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(id);
   }, []);
+
+  const { scrollYProgress } = useScroll();
+  const [visible, setVisible] = useState(false);
+
+  useMotionValueEvent(scrollYProgress, "change", (current) => {
+    if (typeof current === "number") {
+      const direction = current - scrollYProgress.getPrevious()!;
+
+      if (scrollYProgress.get() < 0.05) {
+        setVisible(true);
+      } else {
+        if (direction < 0) {
+          setVisible(true);
+        } else {
+          setVisible(false);
+        }
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (activeHref === '#home') {
+      const id = requestAnimationFrame(() => {
+        setVisible(true);
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [activeHref]);
 
   useEffect(() => {
     const layout = () => {
@@ -265,7 +297,20 @@ const PillNav: React.FC<PillNavProps> = ({
   } as React.CSSProperties;
 
   return (
-    <div className="fixed top-4 z-[1000] w-full left-0 md:w-auto md:left-1/2 md:-translate-x-1/2">
+    <motion.div
+      initial={{
+        opacity: 1,
+        y: 0,
+      }}
+      animate={{
+        y: visible ? 0 : -100,
+        opacity: visible ? 1 : 0,
+      }}
+      transition={{
+        duration: 0.2,
+      }}
+      className="fixed top-4 z-1000 w-full left-0 md:w-auto md:left-1/2 md:-translate-x-1/2"
+    >
       <nav
         className={`w-full md:w-max flex items-center justify-between md:justify-start box-border px-4 md:px-0 ${className}`}
         aria-label="Primary"
@@ -322,7 +367,7 @@ const PillNav: React.FC<PillNavProps> = ({
         >
           <ul
             role="menubar"
-            className="list-none flex items-stretch m-0 p-[3px] h-full"
+            className="list-none flex items-stretch m-0 p-0.75 h-full"
             style={{ gap: 'var(--pill-gap)' }}
           >
             {items.map((item, i) => {
@@ -338,7 +383,7 @@ const PillNav: React.FC<PillNavProps> = ({
               const PillContent = (
                 <>
                   <span
-                    className="hover-circle absolute left-1/2 bottom-0 rounded-full z-[1] block pointer-events-none"
+                    className="hover-circle absolute left-1/2 bottom-0 rounded-full z-1 block pointer-events-none"
                     style={{
                       background: 'var(--base, #000)',
                       willChange: 'transform'
@@ -348,15 +393,15 @@ const PillNav: React.FC<PillNavProps> = ({
                       circleRefs.current[i] = el;
                     }}
                   />
-                  <span className="label-stack relative inline-block leading-[1] z-[2]">
+                  <span className="label-stack relative inline-block leading-none z-2">
                     <span
-                      className="pill-label relative z-[2] inline-block leading-[1]"
+                      className="pill-label relative z-2 inline-block leading-none"
                       style={{ willChange: 'transform' }}
                     >
                       {item.label}
                     </span>
                     <span
-                      className="pill-label-hover absolute left-0 top-0 z-[3] inline-block"
+                      className="pill-label-hover absolute left-0 top-0 z-3 inline-block"
                       style={{
                         color: 'var(--hover-text, #fff)',
                         willChange: 'transform, opacity'
@@ -418,11 +463,11 @@ const PillNav: React.FC<PillNavProps> = ({
           }}
         >
           <span
-            className="hamburger-line w-4 h-0.5 rounded origin-center transition-all duration-[10ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+            className="hamburger-line w-4 h-0.5 rounded origin-center transition-all duration-10 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
             style={{ background: 'var(--pill-bg, #fff)' }}
           />
           <span
-            className="hamburger-line w-4 h-0.5 rounded origin-center transition-all duration-[10ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+            className="hamburger-line w-4 h-0.5 rounded origin-center transition-all duration-10 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
             style={{ background: 'var(--pill-bg, #fff)' }}
           />
         </button>
@@ -430,13 +475,13 @@ const PillNav: React.FC<PillNavProps> = ({
 
       <div
         ref={mobileMenuRef}
-        className="md:hidden absolute top-[3em] left-4 right-4 rounded-[27px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[998] origin-top"
+        className="md:hidden absolute top-[3em] left-4 right-4 rounded-[27px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-998 origin-top"
         style={{
           ...cssVars,
           background: effectiveBaseColor
         }}
       >
-        <ul className="list-none m-0 p-[3px] flex flex-col gap-[3px]">
+        <ul className="list-none m-0 p-0.75 flex flex-col gap-0.75">
           {items.map(item => {
             const defaultStyle: React.CSSProperties = {
               background: 'var(--pill-bg, #fff)',
@@ -484,7 +529,7 @@ const PillNav: React.FC<PillNavProps> = ({
           })}
         </ul>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

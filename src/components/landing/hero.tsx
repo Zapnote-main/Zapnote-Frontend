@@ -5,6 +5,8 @@ import { Button } from '@/src/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Pacifico } from 'next/font/google';
 import { cn } from '@/src/lib/utils';
+import { usePageTransition } from '@/src/hooks/use-page-transition';
+import ConcentricLoader from '@/src/components/ui/concentric-loader';
 
 
 
@@ -19,11 +21,18 @@ export default function HeroGeometric({
   badge = 'Zapnote',
   title1 = 'All your links at',
   title2 = 'One Place',
+  isNavigating = false,
 }: {
   badge?: string;
   title1?: string;
   title2?: string;
+  isNavigating?: boolean;
 }) {
+  const { navigate } = usePageTransition();
+
+  const handleGetStarted = () => {
+    navigate("/auth");
+  };
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: (i: number) => ({
@@ -97,13 +106,27 @@ export default function HeroGeometric({
             animate="visible"
             className="flex flex-col justify-center gap-4 sm:flex-row"
           >
-            <Button
-              size="lg"
-              className="from-primary shadow-primary/10 hover:from-primary/90 rounded-full border-none bg-linear-to-r to-primary shadow-md hover:to-primary/90"
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+              <Button
+                onClick={handleGetStarted}
+                disabled={isNavigating}
+                size="lg"
+                className="from-primary shadow-primary/10 hover:from-primary/90 rounded-full border-none bg-linear-to-r to-primary shadow-md hover:to-primary/90 disabled:opacity-50"
+              >
+                {isNavigating ? (
+                  <ConcentricLoader />
+                ) : (
+                  <>
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </div>

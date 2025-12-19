@@ -34,15 +34,15 @@ export default function CookiePolicyDialog({ open, onOpenChange }: CookiePolicyD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(640px,80vh)] sm:max-w-lg [&>button:last-child]:top-3.5 backdrop-blur-sm border border-zinc-400/60 dark:border-zinc-600/20 rounded-2xl shadow-[4px_8px_12px_2px_rgba(0,0,0,0.2)] bg-white dark:bg-[rgb(53,53,53)]">
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(640px,80vh)] sm:max-w-lg [&>button:last-child]:top-3.5 backdrop-blur-sm border border-border rounded-2xl shadow-lg bg-background text-foreground">
         <DialogHeader className="contents space-y-0 text-left">
-          <DialogTitle className="border-b border-zinc-200/60 dark:border-zinc-800/60 px-6 py-4 text-base">
+          <DialogTitle className="border-b border-border px-6 py-4 text-base font-sans">
             Cookie Policy
           </DialogTitle>
           <div
             ref={contentRef}
             onScroll={handleScroll}
-            className="overflow-y-auto"
+            className="overflow-y-auto font-sans"
           >
             <DialogDescription asChild>
               <div className="px-6 py-4">
@@ -51,7 +51,7 @@ export default function CookiePolicyDialog({ open, onOpenChange }: CookiePolicyD
                   <div>
                     <p><strong>1. Introduction</strong></p>
                     <p>
-                      This Cookie Policy explains how LegalAI (“we”, “our”, “us”)
+                      This Cookie Policy explains how Zapnote (“we”, “our”, “us”)
                       uses cookies and similar technologies when you visit our website.
                       It also explains your choices regarding these technologies.
                     </p>
@@ -161,19 +161,19 @@ export default function CookiePolicyDialog({ open, onOpenChange }: CookiePolicyD
             </DialogDescription>
           </div>
         </DialogHeader>
-        <DialogFooter className="border-t border-zinc-200/60 dark:border-zinc-800/60 px-6 py-4 sm:items-center">
+        <DialogFooter className="border-t border-border px-6 py-4 sm:items-center">
           {!hasReadToBottom && (
             <span className="text-muted-foreground grow text-xs max-sm:text-center">
               Please scroll and read the Cookie Policy before accepting.
             </span>
           )}
           <DialogClose asChild>
-            <Button type="button" variant="outline" className="bg-slate-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-600 hover:bg-slate-200 dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100">
+            <Button type="button" variant="outline" className="bg-secondary text-secondary-foreground border-border hover:bg-secondary/80">
               Cancel
             </Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button type="button" disabled={!hasReadToBottom} className="bg-blue-600 dark:bg-zinc-600 text-white dark:text-zinc-100 hover:bg-blue-700 dark:hover:bg-zinc-500 disabled:bg-slate-300 dark:disabled:bg-zinc-800 disabled:text-slate-500 dark:disabled:text-zinc-400">
+            <Button type="button" disabled={!hasReadToBottom} className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground">
               I Agree
             </Button>
           </DialogClose>
