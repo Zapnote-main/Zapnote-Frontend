@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 
 interface BackgroundProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 function DarkBackground() {
