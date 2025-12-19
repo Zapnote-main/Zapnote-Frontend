@@ -57,37 +57,6 @@ pnpm dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── globals.css          # Global styles and Tailwind imports
-│   ├── layout.tsx           # Root layout with theme provider
-│   └── page.tsx             # Landing page with all sections
-├── components/
-│   ├── landing/
-│   │   ├── hero.tsx         # Hero section with animated title
-│   │   ├── features.tsx     # Features showcase
-│   │   ├── faq.tsx          # FAQ accordion section
-│   │   ├── cta.tsx          # Call-to-action with animated paths
-│   │   ├── footer.tsx       # Site footer
-│   │   └── pill-nav.tsx     # Navigation with scroll detection
-│   └── ui/                  # Reusable UI components
-│       ├── button.tsx       # Custom button component
-│       ├── concentric-loader.tsx # Loading animation
-│       ├── geometric-shapes.tsx  # Background shapes
-│       └── ...
-├── hooks/
-│   ├── use-page-transition.tsx # Navigation with loading states
-│   ├── use-gsap.ts         # GSAP animation utilities
-│   └── use-toast.ts        # Toast notification system
-├── lib/
-│   └── utils.ts            # Utility functions
-└── theme/                  # Theme management
-    ├── theme-provider.tsx  # Theme context provider
-    └── toggle-theme.tsx    # Theme toggle component
-```
 
 ## 🎨 Design System
 
