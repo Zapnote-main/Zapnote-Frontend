@@ -118,8 +118,8 @@ export default function FAQsTwo() {
                     <p className="text-center text-muted-foreground mt-6 px-8">
                         Need more information?{' '}
                         <Link
-                            href="#contact"
-                            onClick={(e) => { e.preventDefault(); }}
+                            href="/contact"
+                            target="_blank"
                             className="text-primary font-medium hover:underline">
                             Contact us
                         </Link>

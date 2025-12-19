@@ -53,13 +53,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="#contact" 
-                  onClick={(e) => { e.preventDefault(); }}
+                <Link 
+                  href="/contact" 
+                  target="_blank"
                   className=" text-zinc-700 dark:text-slate-300 hover:text-accent transition-colors"
                 >
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
