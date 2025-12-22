@@ -1,5 +1,5 @@
-import AuthenticationWrapper from '@/src/components/auth/auth-wrapper'
+import { redirect } from 'next/navigation';
 
-export default function RegisterPage() {
-  return <AuthenticationWrapper mode="register" />
+export default function AuthPage() {
+  redirect('/auth/login');
 }

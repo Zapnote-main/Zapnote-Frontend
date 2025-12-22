@@ -1,5 +1,3 @@
-"use client";
-
 import HeroGeometric from "../components/landing/hero";
 import React from "react";
 import { ThemeToggleButton3 } from "../theme/toggle-theme";
