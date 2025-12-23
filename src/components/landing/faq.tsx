@@ -1,3 +1,5 @@
+"use client"
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/src/components/ui/accordion'
 import Link from 'next/link'
 import { useRef } from 'react'

@@ -18,7 +18,7 @@ export default function AuthenticationWrapper({ mode = 'login' }: Authentication
   const { navigate, isNavigating } = usePageTransition();
 
   const handleAuthenticated = (userData: User) => {
-    navigate("/dashboard");
+    navigate("/home");
   };
 
   return (

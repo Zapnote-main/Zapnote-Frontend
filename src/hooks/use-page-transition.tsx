@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 

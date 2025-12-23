@@ -3,11 +3,19 @@ import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import Link from 'next/link'
 
-export default function SignupPage() {
+interface SignupPageProps {
+  onAuthenticated: (user: { name: string; email: string }) => void;
+}
+
+export default function SignupPage({ onAuthenticated }: SignupPageProps) {
+    const handleDummySignup = () => {
+        // Dummy authentication - just call onAuthenticated with fake user data
+        onAuthenticated({ name: 'Dummy User', email: 'dummy@example.com' });
+    };
+
     return (
         <section className="flex min-h-screen w-full items-center justify-center bg-transparent px-4">
-            <form
-                action=""
+            <div
                 className="bg-muted h-fit w-full max-w-sm overflow-hidden rounded-[calc(var(--radius)+.125rem)] border shadow-md shadow-zinc-950/5 dark:[--color-muted:var(--color-zinc-900)]">
                 <div className="bg-card -m-px rounded-[calc(var(--radius)+.125rem)] border p-8 pb-6">
                     <div className="text-center">
@@ -83,7 +91,7 @@ export default function SignupPage() {
                             />
                         </div>
 
-                        <Button className="w-full">Create Account</Button>
+                        <Button className="w-full" onClick={handleDummySignup}>Create Account (Dummy)</Button>
                     </div>
 
                     <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -95,7 +103,8 @@ export default function SignupPage() {
                     <div className="grid gap-3">
                         <Button
                             type="button"
-                            variant="outline">
+                            variant="outline"
+                            onClick={handleDummySignup}>
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="0.98em"
@@ -114,7 +123,7 @@ export default function SignupPage() {
                                     fill="#eb4335"
                                     d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"></path>
                             </svg>
-                            <span>Google</span>
+                            <span>Google (Dummy)</span>
                         </Button>
                     </div>
                 </div>
@@ -130,7 +139,7 @@ export default function SignupPage() {
                         </Button>
                     </p>
                 </div>
-            </form>
+            </div>
         </section>
     )
 }

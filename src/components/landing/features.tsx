@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardHeader } from '@/src/components/ui/card'
 import { Brain, Share2, Users, Search } from 'lucide-react'
 import { ReactNode, useRef } from 'react'
