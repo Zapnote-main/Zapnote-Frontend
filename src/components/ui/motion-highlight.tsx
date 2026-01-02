@@ -74,7 +74,10 @@ type MotionHighlightProps<T extends string> =
 const MotionHighlight = React.forwardRef<
   HTMLDivElement,
   MotionHighlightProps<any>
->(function MotionHighlight<T extends string>(props, ref) {
+>(function MotionHighlight<T extends string>(
+  props: MotionHighlightProps<T>,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
   const {
     children,
     value,
@@ -101,7 +104,7 @@ const MotionHighlight = React.forwardRef<
 
   const safeSetActiveValue = React.useCallback(
     (v: any | null) => {
-      setActiveValue(prev => {
+      setActiveValue((prev: any) => {
         if (prev !== v) onValueChange?.(v)
         return v
       })
