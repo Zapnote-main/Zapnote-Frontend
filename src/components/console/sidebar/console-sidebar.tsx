@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useSpaces } from "@/src/context/spaces-context"
+import { useAuth } from "@/src/context/auth-context"
 
 import {
   DropdownMenu,
@@ -57,11 +58,8 @@ export function ConsoleSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { setTheme, theme } = useTheme()
-  // We might be outside of SpacesProvider in some edge cases (like login page if it used sidebar, but it doesn't), 
-  // but ConsoleSidebar is used in ConsoleLayout which has the provider.
-  // However, useSpaces throws if not in provider. 
-  // Let's assume it's safe as per layout.tsx change.
   const { setSelectedTool } = useSpaces()
+  const { user, logout } = useAuth()
 
   const handleLinkClick = (e: React.MouseEvent, url: string, label: string) => {
     if (pathname === "/spaces") {
@@ -153,6 +151,7 @@ export function ConsoleSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -172,8 +171,8 @@ export function ConsoleSidebar() {
                     <UserIcon className="size-4" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">shadcn</span>
-                    <span className="truncate text-xs">m@example.com</span>
+                    <span className="truncate font-semibold">{user?.displayName || user?.email?.split('@')[0] || 'User'}</span>
+                    <span className="truncate text-xs">{user?.email || ''}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -190,8 +189,8 @@ export function ConsoleSidebar() {
                       <UserIcon className="size-4" />
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">shadcn</span>
-                      <span className="truncate text-xs">m@example.com</span>
+                      <span className="truncate font-semibold">{user?.displayName || user?.email?.split('@')[0] || 'User'}</span>
+                      <span className="truncate text-xs">{user?.email || ''}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
@@ -201,7 +200,13 @@ export function ConsoleSidebar() {
                   Toggle Theme
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={async () => {
+                  try {
+                    await logout();
+                  } catch (error) {
+                    console.error('Logout failed:', error);
+                  }
+                }}>
                   <LogOut className="mr-2 size-4" />
                   Log out
                 </DropdownMenuItem>

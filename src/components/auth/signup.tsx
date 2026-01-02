@@ -1,16 +1,50 @@
+"use client"
+
+import { useState } from 'react';
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import Link from 'next/link'
+import { useAuth } from '@/src/context/auth-context'
+import { useRouter } from 'next/navigation'
 
-interface SignupPageProps {
-  onAuthenticated: (user: { name: string; email: string }) => void;
-}
+export default function SignupPage() {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const { signUpWithEmail, signInWithGoogle } = useAuth();
+    const router = useRouter();
 
-export default function SignupPage({ onAuthenticated }: SignupPageProps) {
-    const handleDummySignup = () => {
-        // Dummy authentication - just call onAuthenticated with fake user data
-        onAuthenticated({ name: 'Dummy User', email: 'dummy@example.com' });
+    const handleEmailSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            await signUpWithEmail(email, password);
+            router.push('/home');
+        } catch (error: unknown) {
+            setError((error as Error).message || 'Signup failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSignup = async () => {
+        setLoading(true);
+        setError('');
+
+        try {
+            await signInWithGoogle();
+            router.push('/home');
+        } catch (error: unknown) {
+            setError((error as Error).message || 'Google signup failed');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -29,7 +63,13 @@ export default function SignupPage({ onAuthenticated }: SignupPageProps) {
                         <p className="text-sm">Welcome! Create an account to get started</p>
                     </div>
 
-                    <div className="mt-6 space-y-6">
+                    {error && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-red-600 text-sm">{error}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleEmailSignup} className="mt-6 space-y-6">
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <Label
@@ -42,6 +82,8 @@ export default function SignupPage({ onAuthenticated }: SignupPageProps) {
                                     required
                                     name="firstname"
                                     id="firstname"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -55,6 +97,8 @@ export default function SignupPage({ onAuthenticated }: SignupPageProps) {
                                     required
                                     name="lastname"
                                     id="lastname"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -70,29 +114,34 @@ export default function SignupPage({ onAuthenticated }: SignupPageProps) {
                                 required
                                 name="email"
                                 id="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label
-                                    htmlFor="pwd"
+                                    htmlFor="password"
                                     className="text-sm">
                                     Password
                                 </Label>
-                                
                             </div>
                             <Input
                                 type="password"
                                 required
-                                name="pwd"
-                                id="pwd"
+                                name="password"
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 className="input sz-md variant-mixed"
                             />
                         </div>
 
-                        <Button className="w-full" onClick={handleDummySignup}>Create Account (Dummy)</Button>
-                    </div>
+                        <Button className="w-full" type="submit" disabled={loading}>
+                            {loading ? 'Creating Account...' : 'Create Account'}
+                        </Button>
+                    </form>
 
                     <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                         <hr className="border-dashed" />
@@ -104,7 +153,8 @@ export default function SignupPage({ onAuthenticated }: SignupPageProps) {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={handleDummySignup}>
+                            onClick={handleGoogleSignup}
+                            disabled={loading}>
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="0.98em"
@@ -123,7 +173,7 @@ export default function SignupPage({ onAuthenticated }: SignupPageProps) {
                                     fill="#eb4335"
                                     d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"></path>
                             </svg>
-                            <span>Google (Dummy)</span>
+                            <span>Google</span>
                         </Button>
                     </div>
                 </div>

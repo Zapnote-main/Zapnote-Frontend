@@ -5,21 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import ConcentricLoader from "../ui/concentric-loader";
 import { usePageTransition } from "@/src/hooks/use-page-transition";
 
-interface User {
-  name: string;
-  email: string;
-}
-
 interface AuthenticationWrapperProps {
   mode?: 'login' | 'register';
 }
 
 export default function AuthenticationWrapper({ mode = 'login' }: AuthenticationWrapperProps) {
   const { navigate, isNavigating } = usePageTransition();
-
-  const handleAuthenticated = (userData: User) => {
-    navigate("/home");
-  };
 
   return (
     <>
@@ -39,13 +30,13 @@ export default function AuthenticationWrapper({ mode = 'login' }: Authentication
       </AnimatePresence>
 
       <motion.div
-        animate={{ 
+        animate={{
           opacity: isNavigating ? 0 : 1,
-          scale: isNavigating ? 0.95 : 1 
+          scale: isNavigating ? 0.95 : 1
         }}
         transition={{ duration: 0.3 }}
       >
-        <AuthPage onAuthenticated={handleAuthenticated} mode={mode} />
+        <AuthPage mode={mode} />
       </motion.div>
     </>
   );

@@ -1,0 +1,303 @@
+API SPEC - Zapnote Backend (local testing)
+
+Overview
+--------
+- Base URL (local): http://localhost:<PORT> (default PORT from server startup)
+- All JSON responses for success use:
+  {
+    "success": true,
+    "message": "<message>",
+    "data": <payload>
+  }
+- Paginated success responses use:
+  {
+    "success": true,
+    "data": [ ... ],
+    "pagination": { page, limit, total, totalPages }
+  }
+- Error responses:
+  {
+    "success": false,
+    "message": "<error message>",
+    ...(errors?)
+  }
+
+Notes about auth & test mode
+----------------------------
+- Most routes require Firebase authentication via middleware `authenticateFirebaseToken`.
+  Provide Authorization: Bearer <FIREBASE_ID_TOKEN> header.
+- Several modules include a TEST MODE mock auth in router files for local testing (bypasses Firebase token):
+  - `workspace.route.ts` sets `req.userId = 'test-user-123'`
+  - `knowledge.route.ts` sets `req.userId = '11111111-1111-4111-8111-111111111111'`
+  Use these when testing locally in dev as they will bypass auth checks.
+- Many endpoints also use workspace access checks and role requirements (OWNER, EDITOR, VIEWER) via middleware.
+- Rate-limiting is applied to several endpoints; these are noted per-route.
+
+General response shapes (interfaces reference)
+----------------------------------------------
+- UserProfile:
+  { id, email, username, displayName, photoURL, createdAt }
+- UserStats:
+  { totalWorkspaces, ownedWorkspaces, totalKnowledgeItems, totalConversations }
+- WorkspaceWithRole:
+  { id, name, description, ownerId, createdAt, updatedAt, role, memberCount?, itemCount? }
+- WorkspaceMemberWithUser:
+  { id, role, joinedAt, user: { id, email, username, displayName, photoURL } }
+- ConversationWithMessages:
+  { id, title, userId, createdAt, updatedAt, messages: MessageWithSources[] }
+- MessageWithSources:
+  { id, role, content, sourceItemIds, createdAt, sources? }
+- SearchResponse:
+  { query, results: SearchResult[], totalResults }
+- KnowledgeItemWithTags: see types (id, sourceUrl, userIntent, summary, contentType, status, tags[])
+
+Routes
+------
+
+1) Health & test
+-----------------
+GET /health
+- Auth: none
+- Response: 200
+  {
+    success: true, (not using successResponse here, app returns custom object)
+    status: 'ok',
+    timestamp: 'ISO string',
+    environment: 'development' | 'production'
+  }
+
+POST /api/test/seed
+- Auth: none (DEV-only test route)
+- Description: seeds a test user and workspace (IDs hard-coded in code)
+- Response (200):
+  {
+    success: true,
+    message: 'Test data seeded successfully',
+    data: { user, workspace }
+  }
+- Error: 500 with { success: false, error }
+
+2) Users
+--------
+All routes under `/api/v1/users` require Firebase token (authenticateFirebaseToken) in production.
+
+GET /api/v1/users/me
+- Auth: Firebase
+- Returns: UserProfile
+- Example success:
+  {
+    "success": true,
+    "message": "User profile fetched successfully",
+    "data": { id, email, username, displayName, photoURL, createdAt }
+  }
+
+PATCH /api/v1/users/me
+- Auth: Firebase
+- Rate limit: rateLimit('update-profile', 10, 3600)
+- Body (JSON):
+  {
+    "username": "optional, string 3-50",
+    "displayName": "optional, string 1-100"
+  }
+- Response: updated UserProfile
+- Example success (200):
+  { success: true, message: 'Profile updated successfully', data: { ... } }
+- Validation errors: 400 with { success: false, message }
+
+GET /api/v1/users/me/stats
+- Auth: Firebase
+- Returns: UserStats
+- Example:
+  { success: true, message: 'User stats fetched successfully', data: { totalWorkspaces: 3, ... } }
+
+GET /api/v1/users/me/workspaces
+- Auth: Firebase
+- Returns: WorkspaceWithRole[]
+
+DELETE /api/v1/users/me
+- Auth: Firebase
+- Rate limit: rateLimit('delete-account', 1, 3600)
+- Response: { success: true, message: 'Account deleted successfully', data: null }
+
+3) Workspaces
+-------------
+Base path: /api/v1/workspaces
+Note: `workspace.route.ts` applies a mock auth middleware for local testing which sets `req.userId`.
+
+POST /api/v1/workspaces
+- Auth: (mocked in test) -> requires authenticated user
+- Body:
+  { "name": "string (1-100)", "description": "string <= 500 (optional)" }
+- Response: 201
+  { success: true, message: 'Workspace created successfully', data: WorkspaceWithRole }
+- Validation error: 400
+
+GET /api/v1/workspaces/:workspaceId
+- Auth: mock or real
+- Params: workspaceId UUID
+- Response: WorkspaceWithRole (200)
+
+PATCH /api/v1/workspaces/:workspaceId
+- Auth: mock/real
+- Middleware: requireRole('OWNER','EDITOR')
+- Body: { name?: string, description?: string }
+- Response: updated workspace
+
+DELETE /api/v1/workspaces/:workspaceId
+- Auth: mock/real
+- Middleware: requireWorkspaceOwner
+- Response: { success: true, message: 'Workspace deleted successfully', data: null }
+
+GET /api/v1/workspaces/:workspaceId/members
+- Auth: mock/real
+- Response: WorkspaceMemberWithUser[]
+
+POST /api/v1/workspaces/:workspaceId/members
+- Auth: mock/real
+- Middleware: requireRole('OWNER','EDITOR')
+- Body: { "email": "valid email", "role": "OWNER|EDITOR|VIEWER" }
+- Response: 201 { success: true, message: 'Member added successfully', data: member }
+
+PATCH /api/v1/workspaces/:workspaceId/members/:memberId
+- Auth: mock/real
+- Middleware: requireWorkspaceOwner
+- Body: { role: "OWNER|EDITOR|VIEWER" }
+- Response: updated member
+
+DELETE /api/v1/workspaces/:workspaceId/members/:memberId
+- Auth: mock/real
+- Middleware: requireWorkspaceOwner
+- Response: { success: true, message: 'Member removed successfully', data: null }
+
+POST /api/v1/workspaces/:workspaceId/leave
+- Auth: mock/real
+- Response: { success: true, message: 'Left workspace successfully', data: null }
+
+4) Chat (Conversations & Messages)
+----------------------------------
+Base path: /api/v1/workspaces/:workspaceId/chat
+Middleware: authenticateFirebaseToken, checkWorkspaceAccess
+
+POST /
+- Path: /api/v1/workspaces/:workspaceId/chat
+- Rate limit: rateLimit('create-conversation', 50)
+- Body: { "title": "optional string max 200" }
+- Response: 201 { success: true, message: 'Conversation created successfully', data: Conversation }
+
+GET /
+- Path: /api/v1/workspaces/:workspaceId/chat
+- Returns: conversations list (ConversationWithMessages[] or summary list)
+
+GET /:conversationId
+- Path params: conversationId (uuid)
+- Query: ?limit=number (default 50)
+- Response: ConversationWithMessages (includes messages up to limit)
+
+POST /:conversationId/messages
+- Rate limit: rateLimit('send-message', 100)
+- Body: { "message": "string (1-2000)" }
+- Response: { success: true, message: 'Message sent successfully', data: MessageWithSources }
+
+DELETE /:conversationId
+- Response: { success: true, message: 'Conversation deleted successfully', data: null }
+
+5) Search
+---------
+Base path: /api/v1/workspaces/:workspaceId/search
+Middleware: authenticateFirebaseToken, checkWorkspaceAccess
+Rate limit: rateLimit('search', 100, 3600) on both endpoints
+
+POST /semantic
+- Body: { "query": "string 1-500", "limit": number (1-50, default 20), "filters": { contentType?: string, tags?: string[] } }
+- Response: { success: true, message: 'Search completed successfully', data: SearchResponse }
+  (SearchResponse: { query, results: [ { id, title, summary, sourceUrl, contentType, similarity, tags, createdAt } ], totalResults })
+
+POST /hybrid
+- Same schema as /semantic
+- Response: { success: true, message: 'Hybrid search completed successfully', data: SearchResponse }
+
+6) Knowledge (Items)
+--------------------
+Base path: /api/v1/knowledge
+Note: In local test mode, auth is mocked for knowledge routes (see `knowledge.route.ts`).
+
+POST /:workspaceId
+- Middleware: requireRole('OWNER','EDITOR')
+- Rate limit: rateLimit('create-knowledge-item', 50, 3600)
+- Body: { "sourceUrl": "valid url", "userIntent": "optional string <= 500" }
+- Response: 201 { success: true, message: 'Knowledge item created, processing...', data: KnowledgeItem }
+
+GET /:workspaceId
+- Query params: page (int >=1 default1), limit (1-100 default20), type (ContentType optional), status (ProcessingStatus optional)
+- Response (paginated): { success: true, data: [ KnowledgeItem... ], pagination: { page, limit, total, totalPages } }
+
+GET /:workspaceId/:itemId
+- Params: itemId UUID
+- Response: { success: true, message: 'Knowledge item fetched successfully', data: KnowledgeItem }
+
+PATCH /:workspaceId/:itemId
+- Middleware: requireRole('OWNER','EDITOR')
+- Body: { userIntent?: string }
+- Response: updated item
+
+DELETE /:workspaceId/:itemId
+- Middleware: requireRole('OWNER','EDITOR')
+- Response: { success: true, message: 'Knowledge item deleted successfully', data: null }
+
+7) Whiteboard (Spaces & Elements)
+---------------------------------
+Base path: /api/v1/workspaces/:workspaceId/spaces
+Middleware: authenticateFirebaseToken, checkWorkspaceAccess
+Roles: requireRole('OWNER','EDITOR') for create/update/delete actions; delete space requires OWNER
+
+POST /
+- Create space
+- Body: { name: "string 1-100" }
+- Response: 201 { success: true, message: 'Space created successfully', data: { id, name, createdAt, updatedAt, ... } }
+
+GET /
+- Returns: list of spaces
+
+GET /:spaceId
+- Returns: space with elements
+
+POST /:spaceId/elements
+- Rate limit: rateLimit('create-element', 500)
+- Body: { type: string, content: any }
+- Response: 201 created element
+- Emits socket event: 'element:created' to workspace
+
+PATCH /:spaceId/elements/:elementId
+- Body: { content: any }
+- Response: updated element
+- Emits socket event: 'element:updated'
+
+DELETE /:spaceId/elements/:elementId
+- Response: success
+- Emits socket event: 'element:deleted'
+
+DELETE /:spaceId (Owner only)
+- Response: { success: true, message: 'Space deleted successfully', data: null }
+
+Validation & Error handling notes
+---------------------------------
+- Request validation uses `validateRequest` middleware with `zod` schemas. Invalid requests will be rejected with 400 status and an error message.
+- Many endpoints check for required path params and throw 400 if missing (e.g., workspaceId, conversationId, itemId).
+- Authentication failures will return 401/403 depending on middleware behavior.
+- Rate limit middleware will return 429 when limits are exceeded.
+
+Quick test checklist (local)
+----------------------------
+1. Start server (ensure env variables or use test mode paths)
+2. Optionally call POST /api/test/seed to create test user/workspace used by mocked auth.
+3. Test Workspaces endpoints (mock auth is enabled in router) - create, list, add members, etc.
+4. Test Knowledge endpoints (mock auth enabled) - create item with valid sourceUrl, check paginated listing
+5. Test Chat endpoints - create conversation, send messages, fetch conversation
+6. Test Search endpoints - call /semantic and /hybrid with sample query
+7. Test Whiteboard endpoints - create space, create element, update and delete
+
+If you'd like, I can also:
+- Generate an OpenAPI spec for these routes, or
+- Add example curl commands for each endpoint into this file.
+
+---

@@ -1,16 +1,48 @@
+"use client"
+
+import { useState } from 'react';
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import Link from 'next/link'
+import { useAuth } from '@/src/context/auth-context'
+import { useRouter } from 'next/navigation'
 
-interface LoginPageProps {
-  onAuthenticated: (user: { name: string; email: string }) => void;
-}
+export default function LoginPage() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const { signInWithGoogle, signInWithEmail } = useAuth();
+    const router = useRouter();
 
-export default function LoginPage({ onAuthenticated }: LoginPageProps) {
-    const handleDummyLogin = () => {
-        // Dummy authentication - just call onAuthenticated with fake user data
-        onAuthenticated({ name: 'Dummy User', email: 'dummy@example.com' });
+    const handleEmailLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            await signInWithEmail(email, password);
+            router.push('/home');
+        } catch (error: unknown) {
+            setError((error as Error).message || 'Login failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError('');
+
+        try {
+            await signInWithGoogle();
+            router.push('/home');
+        } catch (error: unknown) {
+            setError((error as Error).message || 'Google login failed');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -29,41 +61,52 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
                         <p className="text-sm">Welcome back! Sign in to continue</p>
                     </div>
 
-                    <div className="mt-6 space-y-6">
+                    {error && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-red-600 text-sm">{error}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleEmailLogin} className="mt-6 space-y-6">
                         <div className="space-y-2">
                             <Label
                                 htmlFor="email"
                                 className="block text-sm">
-                                Username
+                                Email
                             </Label>
                             <Input
                                 type="email"
                                 required
                                 name="email"
                                 id="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label
-                                    htmlFor="pwd"
+                                    htmlFor="password"
                                     className="text-sm">
                                     Password
                                 </Label>
-                                
                             </div>
                             <Input
                                 type="password"
                                 required
-                                name="pwd"
-                                id="pwd"
+                                name="password"
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 className="input sz-md variant-mixed"
                             />
                         </div>
 
-                        <Button className="w-full" onClick={handleDummyLogin}>Sign In (Dummy)</Button>
-                    </div>
+                        <Button className="w-full" type="submit" disabled={loading}>
+                            {loading ? 'Signing In...' : 'Sign In'}
+                        </Button>
+                    </form>
 
                     <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                         <hr className="border-dashed" />
@@ -75,7 +118,8 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={handleDummyLogin}>
+                            onClick={handleGoogleLogin}
+                            disabled={loading}>
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="0.98em"
@@ -94,7 +138,7 @@ export default function LoginPage({ onAuthenticated }: LoginPageProps) {
                                     fill="#eb4335"
                                     d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"></path>
                             </svg>
-                            <span>Google (Dummy)</span>
+                            <span>Google</span>
                         </Button>
                     </div>
                 </div>
