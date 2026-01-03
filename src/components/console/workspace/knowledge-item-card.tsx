@@ -62,7 +62,7 @@ export function KnowledgeItemCard({ item }: KnowledgeItemCardProps) {
   }
 
   return (
-    <Card className="group hover:shadow-lg hover:border-primary/20 transition-all duration-300 overflow-hidden relative z-0 hover:z-20 mt-3 hover:ring-4 hover:ring-primary/10">
+    <Card className="group hover:shadow-lg hover:border-primary/20 transition-all duration-300 overflow-hidden relative z-0 hover:z-20 ml-2 mt-3 hover:ring-4 hover:ring-primary/10">
       <div className={cn("absolute top-0 left-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity", contentTypeColors[item.contentType].split(" ")[0].replace("/10", ""))} />
       <CardHeader className="p-4 pb-2 space-y-2">
         <div className="flex items-start justify-between gap-2">

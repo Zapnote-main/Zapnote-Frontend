@@ -53,6 +53,14 @@ export default function HomePage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <LoaderThree />
+      </div>
+    )
+  }
+
   return (
     <div className="w-full h-full">
       <div className="mb-6">

@@ -137,6 +137,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await workspacesApi.getMembers(workspaceId);
       setMembers(prev => ({ ...prev, [workspaceId]: data }));
+      // update member count on workspace object if available
+      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, memberCount: data.length } : w));
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspaceState(prev => prev ? { ...prev, memberCount: data.length } : prev as any);
+      }
     } catch (error) {
       console.error('Failed to fetch members:', error);
       toast.error('Failed to load members');
@@ -150,6 +155,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         [workspaceId]: [...(prev[workspaceId] || []), member]
       }));
+      // increment member count for the workspace
+      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, memberCount: (w.memberCount || 0) + 1 } : w));
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspaceState(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) + 1 } : prev as any);
+      }
       toast.success('Member added successfully');
     } catch (error) {
       console.error('Failed to add member:', error);
@@ -180,6 +190,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         [workspaceId]: (prev[workspaceId] || []).filter(m => m.id !== memberId)
       }));
+      // decrement member count for the workspace
+      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, memberCount: Math.max((w.memberCount || 1) - 1, 0) } : w));
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspaceState(prev => prev ? { ...prev, memberCount: Math.max((prev.memberCount || 1) - 1, 0) } : prev as any);
+      }
       toast.success('Member removed');
     } catch (error) {
       console.error('Failed to remove member:', error);
@@ -193,6 +208,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     try {
       const items = await knowledgeApi.getRecentItems(workspaceId, 10);
       setRecentItems(items);
+      // update item count on workspace if the workspace is present
+      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, itemCount: Math.max(items.length, w.itemCount || 0) } : w));
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspaceState(prev => prev ? { ...prev, itemCount: Math.max(items.length, prev.itemCount || 0) } : prev as any);
+      }
     } catch (error) {
       console.error('Failed to fetch recent items:', error);
     } finally {
@@ -204,6 +224,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     try {
       const item = await knowledgeApi.createItem(workspaceId, input);
       setRecentItems(prev => [item, ...prev].slice(0, 10));
+      // increment item count for the workspace
+      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, itemCount: (w.itemCount || 0) + 1 } : w));
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspaceState(prev => prev ? { ...prev, itemCount: (prev.itemCount || 0) + 1 } : prev as any);
+      }
       toast.success('Link added successfully');
       return item;
     } catch (error) {
@@ -217,6 +242,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     try {
       await knowledgeApi.deleteItem(workspaceId, itemId);
       setRecentItems(prev => prev.filter(i => i.id !== itemId));
+      // decrement item count for the workspace
+      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, itemCount: Math.max((w.itemCount || 1) - 1, 0) } : w));
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspaceState(prev => prev ? { ...prev, itemCount: Math.max((prev.itemCount || 1) - 1, 0) } : prev as any);
+      }
       toast.success('Link deleted');
     } catch (error) {
       console.error('Failed to delete knowledge item:', error);

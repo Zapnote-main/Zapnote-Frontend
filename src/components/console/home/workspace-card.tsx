@@ -13,6 +13,7 @@ import { AddLinkDialog } from "./add-link-dialog"
 import { DeleteWorkspaceDialog } from "./delete-workspace-dialog"
 import { WorkspaceMembersList } from "./workspace-members-list"
 import { cn } from "@/src/lib/utils"
+import { useWorkspace } from "@/src/context/workspace-context"
 
 interface WorkspaceCardProps {
   workspace: WorkspaceWithRole
@@ -29,6 +30,7 @@ const roleColors = {
 export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardProps) {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
+  const { members } = useWorkspace()
 
   const canEdit = workspace.role === "OWNER" || workspace.role === "EDITOR"
 
@@ -77,7 +79,7 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
                   }}
                   title="Chat"
                 >
-                  <MessageSquare className="h-4 w-4" />
+                <MessageSquare className="h-4 w-4" />
                 </Button>
                 {workspace.role === "OWNER" && (
                   <DeleteWorkspaceDialog 
@@ -90,14 +92,20 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
                 </Button>
               </div>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
               <span className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                {workspace.memberCount || 1} {workspace.memberCount === 1 ? "member" : "members"}
+                {(() => {
+                  const count = workspace.memberCount ?? (members[workspace.id]?.length ?? 0)
+                  return `${count} ${count === 1 ? 'member' : 'members'}`
+                })()}
               </span>
               <span className="flex items-center gap-1">
                 <LinkIcon className="h-4 w-4" />
-                {workspace.itemCount || 0} {workspace.itemCount === 1 ? "item" : "items"}
+                {(() => {
+                  const count = workspace.itemCount ?? 0
+                  return `${count} ${count === 1 ? 'item' : 'items'}`
+                })()}
               </span>
             </div>
           </CardHeader>
