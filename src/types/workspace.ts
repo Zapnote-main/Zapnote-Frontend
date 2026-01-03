@@ -38,6 +38,12 @@ export interface WorkspaceMemberWithUser {
   };
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+  addedByAI?: boolean;
+}
+
 export interface KnowledgeItem {
   id: string;
   workspaceId: string;
@@ -46,7 +52,7 @@ export interface KnowledgeItem {
   summary?: string;
   contentType: ContentType;
   status: ProcessingStatus;
-  tags?: string[];
+  tags?: (string | Tag)[];
   createdAt: string;
   updatedAt: string;
 }

@@ -49,7 +49,7 @@ import {
 const libraryViews = [
   { id: "category", label: "Category View", url: "/library/category" },
   { id: "timeline", label: "Timeline View", url: "/library/timeline" },
-  { id: "goal", label: "Intent View", url: "/library/goal" },
+  { id: "goal", label: "Intent View", url: "/library/intent" },
   { id: "recent", label: "Recently Added", url: "/library/recent" },
 ]
 
