@@ -26,11 +26,13 @@ export default function WorkspacePage({ params }: { params: Promise<{ workspaceI
     if (workspaces.length > 0) {
       const workspace = workspaces.find(w => w.id === workspaceId)
       if (workspace) {
-        setCurrentWorkspace(workspace)
-        refreshRecentItems(workspace.id)
+        if (currentWorkspace?.id !== workspaceId) {
+          setCurrentWorkspace(workspace)
+          refreshRecentItems(workspace.id)
+        }
       }
     }
-  }, [workspaceId, workspaces, setCurrentWorkspace, refreshRecentItems])
+  }, [workspaceId, workspaces, setCurrentWorkspace, refreshRecentItems, currentWorkspace])
 
   if (loading && !currentWorkspace) {
     return (

@@ -3,7 +3,7 @@
 import { useAuth } from '@/src/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import ConcentricLoader from '@/src/components/ui/concentric-loader';
+import { LoaderThree } from '@/src/components/ui/loader';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -22,7 +22,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <ConcentricLoader />
+        <LoaderThree />
       </div>
     );
   }

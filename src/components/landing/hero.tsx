@@ -3,7 +3,7 @@ import { Button } from '@/src/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Pacifico } from 'next/font/google';
 import { cn } from '@/src/lib/utils';
-import ConcentricLoader from '@/src/components/ui/concentric-loader';
+import { LoaderThree } from '@/src/components/ui/loader';
 
 
 const pacifico = Pacifico({
@@ -117,7 +117,7 @@ export default function HeroGeometric({
                 className="from-primary shadow-primary/10 hover:from-primary/90 rounded-full border-none bg-linear-to-r to-primary shadow-md hover:to-primary/90 disabled:opacity-50"
               >
                 {isNavigating ? (
-                  <ConcentricLoader />
+                  <LoaderThree className="h-6 w-6" />
                 ) : (
                   <>
                     Get Started

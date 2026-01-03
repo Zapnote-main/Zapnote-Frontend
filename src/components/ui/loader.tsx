@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "motion/react";
 import React from "react";
+import { cn } from "@/src/lib/utils";
 
 export const LoaderOne = () => {
   const transition = (x: number) => {
@@ -92,7 +93,7 @@ export const LoaderTwo = () => {
   );
 };
 
-export const LoaderThree = () => {
+export const LoaderThree = ({ className }: { className?: string }) => {
   return (
     <motion.svg
       xmlns="http://www.w3.org/2000/svg"
@@ -104,7 +105,7 @@ export const LoaderThree = () => {
       strokeWidth="1"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-20 w-20 stroke-neutral-500 [--fill-final:var(--color-yellow-300)] [--fill-initial:var(--color-neutral-50)] dark:stroke-neutral-100 dark:[--fill-final:var(--color-yellow-500)] dark:[--fill-initial:var(--color-neutral-800)]"
+      className={cn("h-20 w-20 stroke-neutral-500 [--fill-final:var(--color-yellow-300)] [--fill-initial:var(--color-neutral-50)] dark:stroke-neutral-100 dark:[--fill-final:var(--color-yellow-500)] dark:[--fill-initial:var(--color-neutral-800)]", className)}
     >
       <motion.path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <motion.path

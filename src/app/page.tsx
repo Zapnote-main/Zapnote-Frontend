@@ -6,7 +6,7 @@ import { ThemeToggleButton3 } from "../theme/toggle-theme";
 import PillNav from "../components/landing/pill-nav";
 import { motion , AnimatePresence } from "framer-motion";
 import GeometricShapesLayer from "../components/ui/geometric-shapes";
-import ConcentricLoader from "../components/ui/concentric-loader";
+import { LoaderThree } from "../components/ui/loader";
 import { usePageTransition } from "../hooks/use-page-transition";
 import Features from "../components/landing/features";
 import Background from "../components/ui/background";
@@ -86,7 +86,7 @@ export default function Home() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <ConcentricLoader />
+            <LoaderThree />
           </motion.div>
         )}
       </AnimatePresence>

@@ -2,7 +2,7 @@
 
 import { AuthPage } from "./auth-page";
 import { motion, AnimatePresence } from "framer-motion";
-import ConcentricLoader from "../ui/concentric-loader";
+import { LoaderThree } from "../ui/loader";
 import { usePageTransition } from "@/src/hooks/use-page-transition";
 
 interface AuthenticationWrapperProps {
@@ -24,7 +24,7 @@ export default function AuthenticationWrapper({ mode = 'login' }: Authentication
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <ConcentricLoader />
+            <LoaderThree />
           </motion.div>
         )}
       </AnimatePresence>
