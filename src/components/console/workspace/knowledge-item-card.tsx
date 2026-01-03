@@ -61,6 +61,10 @@ export function KnowledgeItemCard({ item }: KnowledgeItemCardProps) {
     }
   }
 
+  const handleChatClick = () => {
+    router.push(`/chat?workspaceId=${item.workspaceId}&sourceItemId=${item.id}&type=link`)
+  }
+
   return (
     <Card className="group hover:shadow-lg hover:border-primary/20 transition-all duration-300 overflow-hidden relative z-0 hover:z-20 ml-2 mt-3 hover:ring-4 hover:ring-primary/10">
       <div className={cn("absolute top-0 left-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity", contentTypeColors[item.contentType].split(" ")[0].replace("/10", ""))} />
@@ -90,7 +94,7 @@ export function KnowledgeItemCard({ item }: KnowledgeItemCardProps) {
               variant="ghost" 
               size="icon" 
               className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-              onClick={() => router.push(`/chat?context=${item.id}`)}
+              onClick={handleChatClick}
               title="Chat with this item"
             >
               <MessageSquare className="h-4 w-4" />

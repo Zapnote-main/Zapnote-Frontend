@@ -33,6 +33,11 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
 
   const canEdit = workspace.role === "OWNER" || workspace.role === "EDITOR"
 
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    router.push(`/chat?workspaceId=${workspace.id}&type=workspace`)
+  }
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card 
@@ -72,13 +77,10 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push(`/chat?workspaceId=${workspace.id}`)
-                  }}
-                  title="Chat"
+                  onClick={handleChatClick}
+                  title="Chat with workspace"
                 >
-                <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="h-4 w-4" />
                 </Button>
                 {workspace.role === "OWNER" && (
                   <DeleteWorkspaceDialog 
@@ -91,7 +93,7 @@ export function WorkspaceCard({ workspace, isActive, onSelect }: WorkspaceCardPr
                 </Button>
               </div>
             </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
               <span className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
                 {(() => {

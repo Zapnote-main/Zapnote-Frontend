@@ -15,7 +15,14 @@ import { useAutoResizeTextarea } from "@/src/hooks/use-auto-resize-textarea";
 import { cn } from "@/src/lib/utils";
 
 
-export default function AI_Prompt() {
+interface AI_PromptProps {
+  onSendMessage?: (content: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  workspaceId?: string;
+}
+
+export default function AI_Prompt({ onSendMessage = () => {}, disabled = false, placeholder = "What can I do for you?", workspaceId }: AI_PromptProps) {
   const [value, setValue] = useState("");
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 72,
@@ -92,8 +99,11 @@ export default function AI_Prompt() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      setValue("");
-      adjustHeight(true);
+      if (value.trim() && !disabled) {
+        onSendMessage(value.trim());
+        setValue("");
+        adjustHeight(true);
+      }
     }
   };
 
@@ -114,9 +124,10 @@ export default function AI_Prompt() {
                   adjustHeight();
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder={"What can I do for you?"}
+                placeholder={placeholder}
                 ref={textareaRef}
                 value={value}
+                disabled={disabled}
               />
             </div>
 
@@ -202,8 +213,15 @@ export default function AI_Prompt() {
                     "rounded-lg bg-black/5 p-2 dark:bg-white/5",
                     "hover:bg-black/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:hover:bg-white/10"
                   )}
-                  disabled={!value.trim()}
+                  disabled={!value.trim() || disabled}
                   type="button"
+                  onClick={() => {
+                    if (value.trim() && !disabled) {
+                      onSendMessage(value.trim());
+                      setValue("");
+                      adjustHeight(true);
+                    }
+                  }}
                 >
                   <ArrowRight
                     className={cn(

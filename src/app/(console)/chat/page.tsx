@@ -1,19 +1,110 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import AI_Prompt from "@/src/components/console/chat/ai-prompt";
 import GeminiLogo from "@/src/components/console/chat/gemini-logo";
+import { Button } from "@/src/components/ui/button";
+import { ChatInterface } from "@/src/components/console/chat/chat-interface";
+import { LoaderThree } from "@/src/components/ui/loader";
 import { useSidebar } from "@/src/components/ui/sidebar";
 import { useAuth } from "@/src/context/auth-context";
+import { useWorkspace } from "@/src/context/workspace-context";
 import { motion } from "motion/react";
+import type { ChatContextType } from "@/src/types/chat.types";
 
 export default function ChatPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const { state } = useSidebar();
     const { user } = useAuth();
+    const { currentWorkspace, workspaces } = useWorkspace();
+
+    const [chatContext, setChatContext] = useState<ChatContextType | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
     const sidebarWidth = state === "expanded" ? "16rem" : "3rem";
     const rightMargin = state === "expanded" ? "16rem" : "3rem";
     
     const username = user?.displayName || user?.email?.split('@')[0] || "User";
 
+    const workspaceId = searchParams.get("workspaceId");
+    const sourceItemId = searchParams.get("sourceItemId");
+    const type = searchParams.get("type") as "workspace" | "link" | null;
+
+    useEffect(() => {
+        const initializeChat = async () => {
+            setIsLoading(true);
+
+            try {
+                if (sourceItemId) {
+                    setChatContext({
+                        type: "link",
+                        sourceItemId,
+                        workspaceId: workspaceId || currentWorkspace?.id,
+                    });
+                } else if (workspaceId || currentWorkspace) {
+                    setChatContext({
+                        type: "workspace",
+                        workspaceId: workspaceId || currentWorkspace?.id,
+                    });
+                } else {
+                    setChatContext(null);
+                }
+            } catch (error) {
+                console.error("Failed to initialize chat:", error);
+                setChatContext(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        initializeChat();
+    }, [workspaceId, sourceItemId, type, currentWorkspace]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <LoaderThree />
+            </div>
+        );
+    }
+
+    if (chatContext) {
+        const getBackPath = () => {
+            if (workspaceId) {
+                return `/home/${workspaceId}`;
+            }
+            return "/home";
+        };
+
+        return (
+            <div className="flex flex-col h-full">
+                <div className="border-b border-border px-4 py-3">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(getBackPath())}
+                        className="gap-2"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
+                    </Button>
+                </div>
+
+                <div className="flex-1 min-h-0">
+                    <ChatInterface
+                        workspaceId={chatContext.workspaceId}
+                        sourceItemId={chatContext.sourceItemId}
+                        chatContext={chatContext}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    // Default greeting page
     return (
         <div className="h-full relative w-full overflow-hidden">
             <div 
@@ -54,5 +145,5 @@ export default function ChatPage() {
                 </div>
             </div>
         </div>
-    )
+    );
 }

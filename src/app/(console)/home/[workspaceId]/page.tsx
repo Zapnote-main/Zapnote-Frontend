@@ -2,7 +2,7 @@
 
 import { useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, MessageSquare } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { LoaderThree } from "@/src/components/ui/loader"
 import { KnowledgeItemCard } from "@/src/components/console/workspace/knowledge-item-card"
@@ -76,7 +76,12 @@ export default function WorkspacePage({ params }: { params: Promise<{ workspaceI
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => router.push(`/chat?workspaceId=${workspaceId}`)}>
+          <Button 
+            variant="outline" 
+            onClick={() => router.push(`/chat?workspaceId=${workspaceId}&type=workspace`)}
+            className="gap-2"
+          >
+            <MessageSquare className="h-4 w-4" />
             Chat
           </Button>
           {currentWorkspace.role !== 'VIEWER' && <AddLinkDialog workspaceId={workspaceId} />}
