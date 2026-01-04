@@ -9,9 +9,13 @@ import { ChatHistoryDrawer } from "./chat-history-drawer"
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "../chat/reasoning"
 import { Shimmer } from "../chat/shimmer"
 import AI_Prompt from "./ai-prompt"
+import GeminiLogo from "@/src/components/console/chat/gemini-logo"
 import { LoaderThree } from "@/src/components/ui/loader"
 import { chatApi } from "@/src/lib/api/chat"
 import { useWorkspace } from "@/src/context/workspace-context"
+import { useSidebar } from "@/src/components/ui/sidebar"
+import { useAuth } from "@/src/context/auth-context"
+import { motion } from "motion/react"
 import type { Conversation, Message, ChatContextType } from "@/src/types/chat.types"
 import { toast } from "sonner"
 
@@ -44,6 +48,13 @@ export function ChatInterface({
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const { currentWorkspace } = useWorkspace()
+  const { state } = useSidebar()
+  const { user } = useAuth()
+
+  const sidebarWidth = state === "expanded" ? "16rem" : "3rem"
+  const rightMargin = state === "expanded" ? "16rem" : "3rem"
+  const username = user?.displayName || user?.email?.split('@')[0] || "User"
+
   const effectiveWorkspaceId = workspaceId || currentWorkspace?.id
 
   const scrollToBottom = useCallback(() => {
@@ -204,93 +215,133 @@ export function ChatInterface({
     }
   }
 
-  const getContextTitle = () => {
+  const getGreetingText = () => {
     if (chatContext.type === "link") {
-      return "Chat with Link"
+      return "Let's Analyze this Link"
     }
-    return currentWorkspace?.name || "Chat"
+    return "Let's Dive Deep"
   }
 
   return (
     <div className="flex flex-col h-full relative bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">{getContextTitle()}</h2>
-        </div>
+      {/* Header - Minimal (History Toggle Only) */}
+      <div className="absolute top-4 right-4 z-10">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsHistoryOpen(true)}
+          className="hover:bg-muted/50"
         >
-          <History className="h-5 w-5" />
+          <History className="h-5 w-5 text-muted-foreground" />
         </Button>
       </div>
 
-      {/* Messages Area */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-6"
-      >
-        {messages.length === 0 && !isLoading ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Sparkles className="h-16 w-16 text-primary/20 mb-4" />
-            <h3 className="text-2xl font-semibold mb-2">
-              Start a conversation
-            </h3>
-            <Shimmer duration={2} className="text-muted-foreground">
-              Ask me anything about your knowledge base
-            </Shimmer>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {messages.map((msg) => (
-              <ChatMessage
-                key={msg.id}
-                message={msg}
-                isStreaming={streamingMessageId === msg.id}
-                streamingContent={streamingContent}
+      {messages.length === 0 && !isLoading ? (
+        // Greeting View
+        <div className="h-full relative w-full overflow-hidden">
+          <div 
+            className="absolute flex flex-col items-center justify-center transition-all duration-250 ease-linear" 
+            style={{ 
+              top: 'calc(50% - 200px)',
+              left: 0,
+              width: '100%',
+            }}
+          >
+            <div className="w-full max-w-3xl px-4">
+              <motion.div
+                className="px-4"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.45, staggerChildren: 0.2 }}
+              >
+                <motion.div
+                  className="flex items-center gap-2 pb-1"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <GeminiLogo />
+                  <h2 className="text-xl font-light">Hello {username}</h2>
+                </motion.div>
+                <motion.h1
+                  className="text-4xl text-muted-foreground mb-2"
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {getGreetingText()}
+                </motion.h1>
+              </motion.div>
+              <AI_Prompt
+                onSendMessage={handleSendMessage}
+                workspaceId={effectiveWorkspaceId}
+                disabled={isLoading}
+                placeholder={
+                  chatContext.type === "link"
+                    ? "Ask about this link..."
+                    : "Ask about your workspace..."
+                }
               />
-            ))}
-
-            {isThinking && (
-              <div className="flex justify-start">
-                <div className="bg-muted/30 rounded-2xl p-4">
-                  <Reasoning isStreaming={isThinking}>
-                    <ReasoningTrigger />
-                    <ReasoningContent>
-                      Analyzing your request and searching through your knowledge base...
-                    </ReasoningContent>
-                  </Reasoning>
-                </div>
-              </div>
-            )}
-
-            {isLoading && !isThinking && !streamingMessageId && (
-              <div className="flex justify-center">
-                <LoaderThree />
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        // Chat View
+        <>
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto px-4 py-6"
+          >
+            <div className="max-w-4xl mx-auto space-y-6 pb-4">
+              {messages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  message={msg}
+                  isStreaming={streamingMessageId === msg.id}
+                  streamingContent={streamingContent}
+                />
+              ))}
 
-      {/* Input Area */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border py-4">
-        <AI_Prompt
-          onSendMessage={handleSendMessage}
-          workspaceId={effectiveWorkspaceId}
-          disabled={isLoading}
-          placeholder={
-            chatContext.type === "link"
-              ? "Ask about this link..."
-              : "Ask about your workspace..."
-          }
-        />
-      </div>
+              {isThinking && (
+                <div className="flex justify-start">
+                  <div className="bg-muted/30 rounded-2xl p-4">
+                    <Reasoning isStreaming={isThinking}>
+                      <ReasoningTrigger />
+                      <ReasoningContent>
+                        Analyzing your request and searching through your knowledge base...
+                      </ReasoningContent>
+                    </Reasoning>
+                  </div>
+                </div>
+              )}
+
+              {isLoading && !isThinking && !streamingMessageId && (
+                <div className="flex justify-center">
+                  <LoaderThree />
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Input Area */}
+          <div className="bg-background/95 backdrop-blur-sm py-4 px-4">
+            <div className="max-w-4xl mx-auto">
+              <AI_Prompt
+                onSendMessage={handleSendMessage}
+                workspaceId={effectiveWorkspaceId}
+                disabled={isLoading}
+                placeholder={
+                  chatContext.type === "link"
+                    ? "Ask about this link..."
+                    : "Ask about your workspace..."
+                }
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       {/* History Drawer */}
       <ChatHistoryDrawer

@@ -105,7 +105,7 @@ export function ChatHistoryDrawer({
                         onOpenChange(false)
                       }}
                       className={cn(
-                        "group flex items-start justify-between gap-3 p-3 rounded-lg cursor-pointer transition-all",
+                        "group flex items-start justify-between gap-3 p-3 rounded-lg cursor-pointer transition-all mb-2",
                         activeConversationId === conv.id
                           ? "bg-primary/10 border border-primary/20"
                           : "hover:bg-muted border border-transparent"
