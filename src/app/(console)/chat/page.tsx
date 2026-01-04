@@ -72,27 +72,8 @@ export default function ChatPage() {
     }
 
     if (chatContext) {
-        const getBackPath = () => {
-            if (workspaceId) {
-                return `/home/${workspaceId}`;
-            }
-            return "/home";
-        };
-
         return (
             <div className="flex flex-col h-full">
-                <div className="border-b border-border px-4 py-3">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(getBackPath())}
-                        className="gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </Button>
-                </div>
-
                 <div className="flex-1 min-h-0">
                     <ChatInterface
                         workspaceId={chatContext.workspaceId}

@@ -24,14 +24,16 @@ const roleColors = {
 export function WorkspaceMembersList({ workspaceId, userRole }: WorkspaceMembersListProps) {
   const { members, refreshMembers, removeMember } = useWorkspace()
   const { user } = useAuth()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!members[workspaceId])
 
   const workspaceMembers = members[workspaceId] || []
 
   useEffect(() => {
-    setLoading(true)
-    refreshMembers(workspaceId).finally(() => setLoading(false))
-  }, [workspaceId, refreshMembers])
+    if (!members[workspaceId]) {
+      setLoading(true)
+      refreshMembers(workspaceId).finally(() => setLoading(false))
+    }
+  }, [workspaceId, refreshMembers, members])
 
   const canManageMembers = userRole === "OWNER"
 

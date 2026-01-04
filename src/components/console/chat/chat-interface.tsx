@@ -2,12 +2,12 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
-import { History, Sparkles } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { History, ArrowLeft } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { ChatMessage } from "./chat-message"
 import { ChatHistoryDrawer } from "./chat-history-drawer"
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "../chat/reasoning"
-import { Shimmer } from "../chat/shimmer"
 import AI_Prompt from "./ai-prompt"
 import GeminiLogo from "@/src/components/console/chat/gemini-logo"
 import { LoaderThree } from "@/src/components/ui/loader"
@@ -50,6 +50,7 @@ export function ChatInterface({
   const { currentWorkspace } = useWorkspace()
   const { state } = useSidebar()
   const { user } = useAuth()
+  const router = useRouter()
 
   const sidebarWidth = state === "expanded" ? "16rem" : "3rem"
   const rightMargin = state === "expanded" ? "16rem" : "3rem"
@@ -224,16 +225,28 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-col h-full relative bg-background">
-      {/* Header - Minimal (History Toggle Only) */}
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsHistoryOpen(true)}
-          className="hover:bg-muted/50"
-        >
-          <History className="h-5 w-5 text-muted-foreground" />
-        </Button>
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.push(effectiveWorkspaceId ? `/home/${effectiveWorkspaceId}` : '/home')}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold">{currentWorkspace?.name || "Chat"}</h1>
+            {currentWorkspace?.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1">{currentWorkspace.description}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsHistoryOpen(true)}
+          >
+            <History className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       {messages.length === 0 && !isLoading ? (
