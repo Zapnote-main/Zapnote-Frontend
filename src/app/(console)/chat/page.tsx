@@ -85,7 +85,6 @@ export default function ChatPage() {
         );
     }
 
-    // Default greeting page
     return (
         <div className="h-full relative w-full overflow-hidden">
             <div 
