@@ -9,7 +9,6 @@ import { ChatHistoryDrawer } from "./chat-history-drawer"
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "../chat/reasoning"
 import AI_Prompt from "./ai-prompt"
 import GeminiLogo from "@/src/components/console/chat/gemini-logo"
-import { LoaderThree } from "@/src/components/ui/loader"
 import { chatApi } from "@/src/lib/api/chat"
 import { useWorkspace } from "@/src/context/workspace-context"
 import { useSidebar } from "@/src/components/ui/sidebar"
@@ -90,7 +89,7 @@ export function ChatInterface({
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, scrollToBottom])
+  }, [messages, streamingContent, scrollToBottom])
 
   const handleSendMessage = async (content: string, sourceItemIds?: string[]) => {
     if (!effectiveWorkspaceId) {
@@ -123,7 +122,7 @@ export function ChatInterface({
     }
 
     const tempUserMessage: Message = {
-      id: `temp-${Date.now()}`,
+      id: `temp-user-${Date.now()}`,
       conversationId: convId,
       role: "user",
       content,
@@ -131,38 +130,56 @@ export function ChatInterface({
       createdAt: new Date().toISOString(),
     }
 
-    const tempAssistantId = `temp-assistant-${Date.now()}`
-    const tempAssistantMessage: Message = {
-      id: tempAssistantId,
-      conversationId: convId,
-      role: "assistant",
-      content: "",
-      createdAt: new Date().toISOString(),
-    }
-
-    setMessages((prev) => [...prev, tempUserMessage, tempAssistantMessage])
+    // Add user message immediately
+    setMessages((prev) => [...prev, tempUserMessage])
     setIsLoading(true)
     setIsThinking(true)
 
     try {
-      setStreamingMessageId(tempAssistantId)
-      setStreamingContent("")
-
+      // Send the actual user message and get response
       const responseMessage = await chatApi.streamMessage(
         effectiveWorkspaceId,
         convId,
         { message: content, sourceItemIds: effectiveSourceItemIds },
         (chunk) => {
-          setStreamingContent(chunk)
+          // Set thinking to false once we start receiving content
           setIsThinking(false)
+          
+          // Update streaming content
+          setStreamingContent(chunk)
+          
+          // Update or add the assistant message
+          setMessages((prev) => {
+            const existingAssistantIndex = prev.findIndex(
+              (m) => m.role === "assistant" && m.id.startsWith("streaming-")
+            )
+            
+            const streamingMessage: Message = {
+              id: `streaming-${convId}`,
+              conversationId: convId,
+              role: "assistant",
+              content: chunk,
+              createdAt: new Date().toISOString(),
+            }
+
+            if (existingAssistantIndex >= 0) {
+              // Update existing streaming message
+              const newMessages = [...prev]
+              newMessages[existingAssistantIndex] = streamingMessage
+              return newMessages
+            } else {
+              // Add new streaming message
+              return [...prev, streamingMessage]
+            }
+          })
         }
       )
 
-      setMessages((prev) => 
-        prev.map((msg) => 
-          msg.id === tempAssistantId ? responseMessage : msg
-        )
-      )
+      // Replace streaming message with final message
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.id.startsWith("streaming-"))
+        return [...filtered, responseMessage]
+      })
 
       setConversations((prev) =>
         prev.map((c) =>
@@ -175,8 +192,8 @@ export function ChatInterface({
       console.error("Failed to send message:", error)
       toast.error("Failed to send message")
 
-      // Remove temp messages on error
-      setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id && m.id !== tempAssistantId))
+      // Remove temp user message on error
+      setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id))
     } finally {
       setIsLoading(false)
       setStreamingMessageId(null)
@@ -322,22 +339,13 @@ export function ChatInterface({
             className="flex-1 overflow-y-auto px-4 py-6"
           >
             <div className="max-w-4xl mx-auto space-y-6 pb-4">
-              {messages.map((msg) => {
-                // Skip rendering streaming message if there's no content yet (thinking indicator handles this)
-                const isCurrentlyStreaming = streamingMessageId === msg.id
-                const hasContent = isCurrentlyStreaming ? streamingContent : msg.content
-                if (isCurrentlyStreaming && !hasContent) {
-                  return null
-                }
-                return (
-                  <ChatMessage
-                    key={msg.id}
-                    message={msg}
-                    isStreaming={isCurrentlyStreaming}
-                    streamingContent={streamingContent}
-                  />
-                )
-              })}
+              {messages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  message={msg}
+                  isStreaming={msg.id.startsWith("streaming-")}
+                />
+              ))}
 
               {isThinking && (
                 <div className="flex justify-start">
@@ -349,12 +357,6 @@ export function ChatInterface({
                       </ReasoningContent>
                     </Reasoning>
                   </div>
-                </div>
-              )}
-
-              {isLoading && !isThinking && !streamingMessageId && (
-                <div className="flex justify-center">
-                  <LoaderThree />
                 </div>
               )}
 

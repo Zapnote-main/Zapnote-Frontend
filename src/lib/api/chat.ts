@@ -59,33 +59,29 @@ export const chatApi = {
     );
   },
 
-  // Stream a message (for real-time responses)
+
   async streamMessage(
     workspaceId: string,
     conversationId: string,
     input: SendMessageInput,
     onChunk: (chunk: string) => void
   ): Promise<Message> {
-    // This would use EventSource or fetch with streaming
-    // For now, we'll use regular API and simulate streaming
     const message = await this.sendMessage(workspaceId, conversationId, input);
     
-    // Simulate streaming by breaking content into chunks
     const content = message.content;
-    const chunkSize = 5;
+    const chunkSize = 10; 
     let currentIndex = 0;
 
     return new Promise<Message>((resolve) => {
       const streamInterval = setInterval(() => {
         if (currentIndex < content.length) {
-          const chunk = content.slice(currentIndex, currentIndex + chunkSize);
-          onChunk(content.slice(0, currentIndex + chunk.length));
-          currentIndex += chunkSize;
+          currentIndex = Math.min(currentIndex + chunkSize, content.length);
+          onChunk(content.slice(0, currentIndex));
         } else {
           clearInterval(streamInterval);
           resolve(message);
         }
-      }, 30);
+      }, 20);
     });
   },
 };
