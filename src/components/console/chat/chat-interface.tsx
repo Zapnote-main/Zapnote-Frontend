@@ -38,12 +38,14 @@ export function ChatInterface({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
-  const [streamingContent, setStreamingContent] = useState("")
+  // streamingContent is primarily used for scroll triggering
+  const [streamingContent, setStreamingContent] = useState("") 
   const [isThinking, setIsThinking] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  // Ref to track if we have already switched from thinking to streaming in the current request
+  const isStreamingRef = useRef(false)
 
   const { currentWorkspace } = useWorkspace()
   const { state } = useSidebar()
@@ -134,6 +136,7 @@ export function ChatInterface({
     setMessages((prev) => [...prev, tempUserMessage])
     setIsLoading(true)
     setIsThinking(true)
+    isStreamingRef.current = false; // Reset streaming state
 
     try {
       // Send the actual user message and get response
@@ -142,10 +145,13 @@ export function ChatInterface({
         convId,
         { message: content, sourceItemIds: effectiveSourceItemIds },
         (chunk) => {
-          // Set thinking to false once we start receiving content
-          setIsThinking(false)
+          // Switch from thinking to streaming only once
+          if (!isStreamingRef.current) {
+            setIsThinking(false)
+            isStreamingRef.current = true
+          }
           
-          // Update streaming content
+          // Update streaming content state (triggering scroll)
           setStreamingContent(chunk)
           
           // Update or add the assistant message
@@ -160,6 +166,8 @@ export function ChatInterface({
               role: "assistant",
               content: chunk,
               createdAt: new Date().toISOString(),
+              sources: [], // Ensure sources array exists to prevent render errors
+              sourceItemIds: []
             }
 
             if (existingAssistantIndex >= 0) {
@@ -192,13 +200,12 @@ export function ChatInterface({
       console.error("Failed to send message:", error)
       toast.error("Failed to send message")
 
-      // Remove temp user message on error
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id))
     } finally {
       setIsLoading(false)
-      setStreamingMessageId(null)
       setStreamingContent("")
       setIsThinking(false)
+      isStreamingRef.current = false
     }
   }
 

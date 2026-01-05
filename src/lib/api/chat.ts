@@ -14,7 +14,6 @@ export interface SendMessageInput {
 }
 
 export const chatApi = {
-  // Create a new conversation
   async createConversation(workspaceId: string, input: CreateConversationInput): Promise<Conversation> {
     const response = await apiClient.post<ApiResponse<Conversation>>(
       `/api/v1/workspaces/${workspaceId}/chat`,
@@ -23,7 +22,6 @@ export const chatApi = {
     return response.data;
   },
 
-  // Get all conversations for a workspace
   async getConversations(workspaceId: string): Promise<Conversation[]> {
     const response = await apiClient.get<ApiResponse<Conversation[]>>(
       `/api/v1/workspaces/${workspaceId}/chat`
@@ -31,7 +29,6 @@ export const chatApi = {
     return response.data;
   },
 
-  // Get a specific conversation with messages
   async getConversation(workspaceId: string, conversationId: string, limit = 50): Promise<Conversation> {
     const response = await apiClient.get<ApiResponse<Conversation>>(
       `/api/v1/workspaces/${workspaceId}/chat/${conversationId}?limit=${limit}`
@@ -39,7 +36,6 @@ export const chatApi = {
     return response.data;
   },
 
-  // Send a message in a conversation
   async sendMessage(
     workspaceId: string,
     conversationId: string,
@@ -52,13 +48,11 @@ export const chatApi = {
     return response.data;
   },
 
-  // Delete a conversation
   async deleteConversation(workspaceId: string, conversationId: string): Promise<void> {
     await apiClient.delete<ApiResponse<null>>(
       `/api/v1/workspaces/${workspaceId}/chat/${conversationId}`
     );
   },
-
 
   async streamMessage(
     workspaceId: string,
@@ -68,15 +62,25 @@ export const chatApi = {
   ): Promise<Message> {
     const message = await this.sendMessage(workspaceId, conversationId, input);
     
-    const content = message.content;
+    const content = message.content || ""; 
     const chunkSize = 10; 
     let currentIndex = 0;
 
     return new Promise<Message>((resolve) => {
+      if (content.length === 0) {
+        resolve(message);
+        return;
+      }
+
       const streamInterval = setInterval(() => {
         if (currentIndex < content.length) {
           currentIndex = Math.min(currentIndex + chunkSize, content.length);
           onChunk(content.slice(0, currentIndex));
+          
+          if (currentIndex >= content.length) {
+             clearInterval(streamInterval);
+             resolve(message);
+          }
         } else {
           clearInterval(streamInterval);
           resolve(message);
