@@ -1,4 +1,3 @@
-// src/components/console/chat/chat-history-drawer.tsx
 "use client"
 
 import { MessageSquare, Trash2, Clock } from "lucide-react"

@@ -153,11 +153,18 @@ export function ChatInterface({
         convId,
         { message: content, sourceItemIds: effectiveSourceItemIds },
         (chunk) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === tempAssistantId ? { ...msg, content: chunk } : msg
+            )
+          )
           setStreamingContent(chunk)
           setIsThinking(false)
         }
       )
-
+      setStreamingMessageId(null)
+      setStreamingContent("")
+      
       setMessages((prev) => 
         prev.map((msg) => 
           msg.id === tempAssistantId ? responseMessage : msg
@@ -177,10 +184,10 @@ export function ChatInterface({
 
       // Remove temp messages on error
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id && m.id !== tempAssistantId))
-    } finally {
-      setIsLoading(false)
       setStreamingMessageId(null)
       setStreamingContent("")
+    } finally {
+      setIsLoading(false)
       setIsThinking(false)
     }
   }
@@ -333,7 +340,7 @@ export function ChatInterface({
 
               {isThinking && (
                 <div className="flex justify-start">
-                  <div className="bg-muted/30 rounded-2xl p-4">
+                  <div className="p-4">
                     <Reasoning isStreaming={isThinking}>
                       <ReasoningTrigger />
                       <ReasoningContent>
