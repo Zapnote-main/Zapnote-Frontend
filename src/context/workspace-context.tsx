@@ -35,7 +35,7 @@ interface WorkspaceContextType {
   updateMemberRole: (workspaceId: string, memberId: string, role: UpdateMemberRoleInput) => Promise<void>;
   removeMember: (workspaceId: string, memberId: string) => Promise<void>;
   
-  refreshRecentItems: (workspaceId: string) => Promise<void>;
+  refreshRecentItems: (workspaceId: string, silent?: boolean) => Promise<void>;
   createKnowledgeItem: (workspaceId: string, input: CreateKnowledgeItemInput) => Promise<KnowledgeItem>;
   deleteKnowledgeItem: (workspaceId: string, itemId: string) => Promise<void>;
 }
@@ -203,8 +203,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const refreshRecentItems = useCallback(async (workspaceId: string) => {
-    setItemsLoading(true);
+  const refreshRecentItems = useCallback(async (workspaceId: string, silent = false) => {
+    if (!silent) setItemsLoading(true);
     try {
       const items = await knowledgeApi.getRecentItems(workspaceId, 10);
       setRecentItems(items);
@@ -216,9 +216,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Failed to fetch recent items:', error);
     } finally {
-      setItemsLoading(false);
+      if (!silent) setItemsLoading(false);
     }
-  }, []);
+  }, [currentWorkspace]);
 
   const createKnowledgeItem = useCallback(async (workspaceId: string, input: CreateKnowledgeItemInput) => {
     try {
@@ -260,6 +260,23 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       refreshWorkspaces();
     }
   }, [user, refreshWorkspaces]);
+
+  // Poll for processing items
+  useEffect(() => {
+    if (!currentWorkspace) return;
+
+    const hasProcessingItems = recentItems.some(
+      item => item.status === 'PROCESSING' || item.status === 'PENDING'
+    );
+
+    if (hasProcessingItems) {
+      const interval = setInterval(() => {
+        refreshRecentItems(currentWorkspace.id, true);
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [recentItems, currentWorkspace, refreshRecentItems]);
 
   const value = {
     workspaces,

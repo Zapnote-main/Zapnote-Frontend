@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ExternalLink, MoreVertical, Calendar, Tag as TagIcon, MessageSquare, Loader2, Trash2, Edit } from "lucide-react"
+import { ExternalLink, MoreVertical, Calendar, Tag as TagIcon, MessageSquare, Loader2, Trash2, Edit, CheckCircle2, XCircle, Clock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
@@ -28,6 +28,13 @@ import { toast } from "sonner"
 
 interface KnowledgeItemCardProps {
   item: KnowledgeItem
+}
+
+const statusConfig = {
+  PENDING: { icon: Clock, color: "text-yellow-600 dark:text-yellow-400", label: "Pending" },
+  PROCESSING: { icon: Loader2, color: "text-blue-600 dark:text-blue-400", label: "Processing" },
+  COMPLETED: { icon: CheckCircle2, color: "text-green-600 dark:text-green-400", label: "Completed" },
+  FAILED: { icon: XCircle, color: "text-red-600 dark:text-red-400", label: "Failed" },
 }
 
 const contentTypeColors: Record<ContentType, string> = {
@@ -64,6 +71,8 @@ export function KnowledgeItemCard({ item }: KnowledgeItemCardProps) {
   const handleChatClick = () => {
     router.push(`/chat?workspaceId=${item.workspaceId}&sourceItemId=${item.id}&type=link`)
   }
+
+  const StatusIcon = statusConfig[item.status].icon
 
   return (
     <Card className="group hover:shadow-lg hover:border-primary/20 transition-all duration-300 overflow-hidden relative z-0 hover:z-20 ml-2 mt-3 hover:ring-4 hover:ring-primary/10">
@@ -160,6 +169,13 @@ export function KnowledgeItemCard({ item }: KnowledgeItemCardProps) {
             })}
           </div>
         )}
+
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
+          <div className={cn("flex items-center gap-1.5 text-xs font-medium", statusConfig[item.status].color)}>
+            <StatusIcon className={cn("h-3.5 w-3.5", item.status === 'PROCESSING' && "animate-spin")} />
+            {statusConfig[item.status].label}
+          </div>
+        </div>
       </CardContent>
     
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>

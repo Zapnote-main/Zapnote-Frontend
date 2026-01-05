@@ -1,4 +1,3 @@
-// src/components/console/chat/chat-interface.tsx
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
@@ -335,7 +334,7 @@ export function ChatInterface({
                     <Reasoning isStreaming={isThinking}>
                       <ReasoningTrigger />
                       <ReasoningContent>
-                        Analyzing your request and searching through your knowledge base...
+                        Analyzing your request according to your knowledge base...
                       </ReasoningContent>
                     </Reasoning>
                   </div>
@@ -354,7 +353,7 @@ export function ChatInterface({
 
           {/* Input Area */}
           <div className="bg-background/95 backdrop-blur-sm py-4 px-4">
-            <div className="max-w-4xl mx-auto w-full">
+            <div className="max-w-4xl mx-auto w-full flex justify-center">
               <AI_Prompt
                 onSendMessage={handleSendMessage}
                 workspaceId={effectiveWorkspaceId}
