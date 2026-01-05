@@ -65,7 +65,7 @@ export const chatApi = {
     conversationId: string,
     input: SendMessageInput,
     onChunk: (chunk: string) => void
-  ): Promise<void> {
+  ): Promise<Message> {
     // This would use EventSource or fetch with streaming
     // For now, we'll use regular API and simulate streaming
     const message = await this.sendMessage(workspaceId, conversationId, input);
@@ -75,7 +75,7 @@ export const chatApi = {
     const chunkSize = 5;
     let currentIndex = 0;
 
-    return new Promise<void>((resolve) => {
+    return new Promise<Message>((resolve) => {
       const streamInterval = setInterval(() => {
         if (currentIndex < content.length) {
           const chunk = content.slice(currentIndex, currentIndex + chunkSize);
@@ -83,7 +83,7 @@ export const chatApi = {
           currentIndex += chunkSize;
         } else {
           clearInterval(streamInterval);
-          resolve();
+          resolve(message);
         }
       }, 30);
     });

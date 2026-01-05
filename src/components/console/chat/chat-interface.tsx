@@ -148,7 +148,7 @@ export function ChatInterface({
       setStreamingMessageId(tempAssistantId)
       setStreamingContent("")
 
-      await chatApi.streamMessage(
+      const responseMessage = await chatApi.streamMessage(
         effectiveWorkspaceId,
         convId,
         { message: content, sourceItemIds: effectiveSourceItemIds },
@@ -158,13 +158,16 @@ export function ChatInterface({
         }
       )
 
-      const updatedConv = await chatApi.getConversation(effectiveWorkspaceId, convId)
-      setMessages(updatedConv.messages || [])
+      setMessages((prev) => 
+        prev.map((msg) => 
+          msg.id === tempAssistantId ? responseMessage : msg
+        )
+      )
 
       setConversations((prev) =>
         prev.map((c) =>
           c.id === convId
-            ? { ...updatedConv, lastMessage: updatedConv.messages?.slice(-1)[0]?.content }
+            ? { ...c, lastMessage: responseMessage.content }
             : c
         )
       )
