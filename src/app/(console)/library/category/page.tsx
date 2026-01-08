@@ -1,13 +1,9 @@
-import CateogoryView from "@/src/components/console/library/cateogory-view";
+import CategoryView from "@/src/components/console/library/cateogory-view";
 
 export default function CategoryPage() {
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold">Category View</h1>
-      <p className="text-muted-foreground">Browse your library by category.</p>
-      <div className="mt-4">
-        <CateogoryView />
-      </div>
+        <CategoryView />
     </div>
   );
 }

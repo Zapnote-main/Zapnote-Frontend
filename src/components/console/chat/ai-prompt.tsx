@@ -108,7 +108,7 @@ export default function AI_Prompt({ onSendMessage = () => {}, disabled = false, 
   };
 
   return (
-    <div className="w-full max-w-3xl py-4 px-4">
+    <div className="w-full max-w-3xl bg-card rounded-2xl">
       <div className="rounded-2xl bg-black/5 p-1.5 dark:bg-white/5">
         <div className="relative">
           <div className="relative flex flex-col">
@@ -184,7 +184,6 @@ export default function AI_Prompt({ onSendMessage = () => {}, disabled = false, 
                             {MODEL_ICONS[model] || (
                               <Bot className="h-4 w-4 opacity-50" />
                             )}{" "}
-                            {/* Use mapped SVG or fallback */}
                             <span>{model}</span>
                           </div>
                           {selectedModel === model && (

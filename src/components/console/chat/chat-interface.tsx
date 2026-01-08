@@ -9,7 +9,6 @@ import { ChatHistoryDrawer } from "./chat-history-drawer"
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "../chat/reasoning"
 import AI_Prompt from "./ai-prompt"
 import GeminiLogo from "@/src/components/console/chat/gemini-logo"
-import { LoaderThree } from "@/src/components/ui/loader"
 import { chatApi } from "@/src/lib/api/chat"
 import { useWorkspace } from "@/src/context/workspace-context"
 import { useSidebar } from "@/src/components/ui/sidebar"
@@ -100,7 +99,6 @@ export function ChatInterface({
 
     let convId: string = activeConversationId || ""
 
-    // Create conversation if doesn't exist
     if (!convId) {
       try {
         const title = content.length > 50 ? `${content.slice(0, 50)}...` : content
@@ -120,7 +118,6 @@ export function ChatInterface({
       }
     }
 
-    // Create temporary user message
     const tempUserMessage: Message = {
       id: `temp-user-${Date.now()}`,
       conversationId: convId,
@@ -130,7 +127,6 @@ export function ChatInterface({
       createdAt: new Date().toISOString(),
     }
 
-    // Add user message to UI immediately
     setMessages((prev) => [...prev, tempUserMessage])
     setIsLoading(true)
     setIsThinking(true)
@@ -225,35 +221,38 @@ export function ChatInterface({
     return "Let's Dive Deep"
   }
 
-  return (
-    <div className="flex flex-col h-full relative bg-background">
-
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push(effectiveWorkspaceId ? `/home/${effectiveWorkspaceId}` : '/home')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold">{currentWorkspace?.name || "Chat"}</h1>
-            {currentWorkspace?.description && (
-              <p className="text-xs text-muted-foreground line-clamp-1">{currentWorkspace.description}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsHistoryOpen(true)}
-          >
-            <History className="h-5 w-5" />
-          </Button>
+  const headerContent = (
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between shrink-0">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => router.push(effectiveWorkspaceId ? `/home/${effectiveWorkspaceId}` : '/home')}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-xl font-bold">{currentWorkspace?.name || "Chat"}</h1>
+          {currentWorkspace?.description && (
+            <p className="text-xs text-muted-foreground line-clamp-1">{currentWorkspace.description}</p>
+          )}
         </div>
       </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsHistoryOpen(true)}
+        >
+          <History className="h-5 w-5" />
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col h-full relative bg-background overflow-hidden">
 
       {messages.length === 0 && !isLoading ? (
 
         <div className="h-full relative w-full overflow-hidden">
+          {headerContent}
           <div 
             className="absolute flex flex-col items-center justify-center transition-all duration-250 ease-linear" 
             style={{ 
@@ -303,11 +302,12 @@ export function ChatInterface({
       ) : (
 
         <>
+          {headerContent}
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto px-4 py-6"
+            className="flex-1 overflow-y-auto min-h-0 pb-32"
           >
-            <div className="max-w-4xl mx-auto space-y-6 pb-4">
+            <div className="max-w-4xl mx-auto space-y-6 px-4 py-6">
               {messages.map((msg) => (
                 <ChatMessage
                   key={msg.id}
@@ -321,7 +321,7 @@ export function ChatInterface({
                     <Reasoning isStreaming={isThinking}>
                       <ReasoningTrigger />
                       <ReasoningContent>
-                        Analyzing your request according to your knowledge base...
+                        Analyzing your request...
                       </ReasoningContent>
                     </Reasoning>
                   </div>
@@ -332,9 +332,16 @@ export function ChatInterface({
             </div>
           </div>
 
-          {/* Input Area */}
-          <div className="bg-background/95 backdrop-blur-sm py-4 px-4">
-            <div className="max-w-4xl mx-auto w-full flex justify-center">
+          <div 
+            className="fixed bottom-6 z-20 transition-all duration-300 ease-in-out"
+            style={{ 
+              left: `calc(${sidebarWidth} + (100% - ${sidebarWidth}) / 2)`,
+              transform: 'translateX(-50%)',
+              width: `calc(100% - ${sidebarWidth})`,
+              maxWidth: '40rem',
+            }}
+          >
+            <span className="bg-background rounded-2xl">
               <AI_Prompt
                 onSendMessage={handleSendMessage}
                 workspaceId={effectiveWorkspaceId}
@@ -345,12 +352,11 @@ export function ChatInterface({
                     : "Ask about your workspace..."
                 }
               />
-            </div>
+            </span>
           </div>
         </>
       )}
 
-      {/* History Drawer */}
       <ChatHistoryDrawer
         open={isHistoryOpen}
         onOpenChange={setIsHistoryOpen}
