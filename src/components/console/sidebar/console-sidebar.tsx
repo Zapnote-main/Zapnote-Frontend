@@ -129,8 +129,7 @@ export function ConsoleSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              {/* Recent Files Section */}
-              <Collapsible className="group/collapsible" defaultOpen>
+              <Collapsible className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
@@ -157,7 +156,6 @@ export function ConsoleSidebar() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => {
-                                // If on spaces, select as tool instead of opening
                                 if (pathname === "/spaces") {
                                   e.preventDefault()
                                   handleLinkClick(e, item.sourceUrl, item.summary || "Link")

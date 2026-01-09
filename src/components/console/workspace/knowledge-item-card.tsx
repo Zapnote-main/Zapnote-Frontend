@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ExternalLink, MoreVertical, Calendar, Tag, MessageSquare, Loader2, Trash2, Edit, CheckCircle2, XCircle, Clock, GripVertical } from "lucide-react"
+import { ExternalLink, MoreVertical, Calendar, Tag as TagIcon, MessageSquare, Loader2, Trash2, Edit, CheckCircle2, XCircle, Clock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader } from "@/src/components/ui/card"
 import { Badge } from "@/src/components/ui/badge"
@@ -83,7 +83,6 @@ export function DraggableKnowledgeItemCard({ item }: DraggableKnowledgeItemCardP
       await updateKnowledgeItem(item.workspaceId, item.id, { userIntent: editIntent })
       setIsEditOpen(false)
     } catch (error) {
-      // Error is handled in the context
     } finally {
       setIsUpdating(false)
     }
@@ -124,28 +123,25 @@ export function DraggableKnowledgeItemCard({ item }: DraggableKnowledgeItemCardP
         
         <CardHeader className="p-4 pb-2 space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="space-y-1 min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={cn("text-xs font-medium", contentTypeColors[item.contentType])}>
-                    {item.contentType}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <a 
-                  href={item.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block font-semibold hover:underline line-clamp-2 wrap-break-words text-base group-hover:text-primary transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {item.summary || item.sourceUrl}
-                </a>
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={cn("text-xs font-medium", contentTypeColors[item.contentType])}>
+                  {item.contentType}
+                </Badge>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {new Date(item.createdAt).toLocaleDateString()}
+                </span>
               </div>
+              <a 
+                href={item.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block font-semibold hover:underline line-clamp-2 wrap-break-words text-base group-hover:text-primary transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {item.summary || item.sourceUrl}
+              </a>
             </div>
             
             <div className="flex items-center gap-1">
@@ -217,7 +213,7 @@ export function DraggableKnowledgeItemCard({ item }: DraggableKnowledgeItemCardP
                 const key = typeof tag === 'string' ? tag : tag.id;
                 return (
                   <Badge key={key} variant="secondary" className="text-xs px-2 py-0.5 bg-secondary/50 hover:bg-secondary transition-colors">
-                    <Tag className="h-3 w-3 mr-1 opacity-70" />
+                    <TagIcon className="h-3 w-3 mr-1 opacity-70" />
                     {label}
                   </Badge>
                 )
@@ -229,10 +225,6 @@ export function DraggableKnowledgeItemCard({ item }: DraggableKnowledgeItemCardP
             <div className={cn("flex items-center gap-1.5 text-xs font-medium", statusConfig[item.status].color)}>
               <StatusIcon className={cn("h-3.5 w-3.5", item.status === 'PROCESSING' && "animate-spin")} />
               {statusConfig[item.status].label}
-            </div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <GripVertical className="h-3 w-3" />
-              Drag to whiteboard
             </div>
           </div>
         </CardContent>

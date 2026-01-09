@@ -8,6 +8,15 @@ import "@excalidraw/excalidraw/index.css";
 import { toast } from "sonner";
 import { spacesApi } from "@/src/lib/api/spaces";
 import { Trash2, Edit } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/src/components/ui/dialog";
+import { Button } from "@/src/components/ui/button";
 
 const Excalidraw = dynamic(
   () => import("@excalidraw/excalidraw").then((mod) => mod.Excalidraw),
@@ -32,6 +41,7 @@ export default function CollaborativeWhiteboard() {
   const { currentWorkspace } = useWorkspace();
   
   const [selectedCard, setSelectedCard] = useState<KnowledgeCardSelection | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const lastSyncedElements = useRef<any[]>([]);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -106,17 +116,13 @@ export default function CollaborativeWhiteboard() {
     registerSaveHandler(async () => {
         await saveElements(true);
     });
-    // Cleanup
     return () => registerSaveHandler(async () => {}); 
   }, [registerSaveHandler, saveElements]);
 
-  // Auto-save on change
   const handleChange = useCallback((elements: readonly any[], appState: any) => {
-    // Check selection
     if (appState.selectedElementIds) {
       const selectedIds = Object.keys(appState.selectedElementIds);
       if (selectedIds.length > 0) {
-        // Find if selected element is a knowledge card
         const selectedEl = elements.find(el => el.id === selectedIds[0]);
         if (selectedEl) {
              const cardInfo = selectedEl.customData?.isKnowledgeCard ? selectedEl : 
@@ -135,7 +141,7 @@ export default function CollaborativeWhiteboard() {
                      itemId: cardInfo.customData.itemId,
                      elementId: cardInfo.id,
                      x: vx,
-                     y: vy - 50 // Position above
+                     y: vy - 50 
                    };
                });
              } else {
@@ -160,10 +166,14 @@ export default function CollaborativeWhiteboard() {
     }, 2000);
   }, [canEdit, saveElements]);
 
-  const handleDeleteCard = async () => {
+  const handleDeleteCard = () => {
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const executeDeleteCard = async () => {
     if (!selectedCard || !currentWorkspace) return;
-    if (confirm("Remove this link from the whiteboard?")) {
-        try {
+    
+    try {
              if (excalidrawAPI) {
                  const elements = excalidrawAPI.getSceneElements();
                  // Find group
@@ -182,9 +192,9 @@ export default function CollaborativeWhiteboard() {
                  }
              }
              setSelectedCard(null);
-        } catch (e) {
-            console.error(e);
-        }
+             setIsDeleteConfirmOpen(false);
+    } catch (e) {
+        console.error(e);
     }
   };
 
@@ -244,7 +254,6 @@ export default function CollaborativeWhiteboard() {
             customData: { isKnowledgeCard: true, itemId: item.itemId, link: item.url }
            };
 
-           // Label Text
            const labelText = {
             type: "text",
             x: sceneX + 16,
@@ -269,7 +278,7 @@ export default function CollaborativeWhiteboard() {
             text: item.label ? (item.label.length > 25 ? item.label.substring(0, 24) + "..." : item.label) : "Untitled Link",
             originalText: item.label || "Untitled Link",
             fontSize: 16,
-            fontFamily: 1, // Virgil
+            fontFamily: 1, 
             textAlign: "left",
             verticalAlign: "top",
             baseline: 14,
@@ -469,6 +478,21 @@ export default function CollaborativeWhiteboard() {
                  </div>
               </div>
             )}
+            
+            <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Remove from whiteboard</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to remove this item from the whiteboard? This will not delete the item from your library.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={executeDeleteCard}>Remove</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
       )}
     </div>
