@@ -17,6 +17,11 @@ import {
 import { useTheme } from "next-themes"
 import { useSpaces } from "@/src/context/spaces-context"
 import { useAuth } from "@/src/context/auth-context"
+import { useWorkspace } from "@/src/context/workspace-context"
+import {
+  FileText,
+  Link as LinkIcon, 
+} from "lucide-react"
 
 import {
   DropdownMenu,
@@ -58,6 +63,7 @@ export function ConsoleSidebar() {
   const { setTheme, theme } = useTheme()
   const { setSelectedTool } = useSpaces()
   const { user, logout } = useAuth()
+  const { recentItems } = useWorkspace()
 
   const handleLinkClick = (e: React.MouseEvent, url: string, label: string) => {
     if (pathname === "/spaces") {
@@ -66,8 +72,8 @@ export function ConsoleSidebar() {
     }
   }
 
-  const handleDragStart = (e: React.DragEvent, url: string, label: string) => {
-    e.dataTransfer.setData("application/json", JSON.stringify({ type: 'link', url, label }))
+  const handleDragStart = (e: React.DragEvent, url: string, label: string, itemId?: string) => {
+    e.dataTransfer.setData("application/json", JSON.stringify({ type: 'link', url, label, itemId }))
   }
 
   return (
@@ -115,6 +121,55 @@ export function ConsoleSidebar() {
                             >
                               <span>{view.label}</span>
                             </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {/* Recent Files Section */}
+              <Collapsible className="group/collapsible" defaultOpen>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <FileText />
+                      <span>Recent Files</span>
+                      <ChevronRightIcon className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {recentItems.length === 0 && (
+                        <SidebarMenuSubItem>
+                           <span className="text-xs text-muted-foreground px-2 py-1">No recent items</span>
+                        </SidebarMenuSubItem>
+                      )}
+                      {recentItems.slice(0, 10).map((item) => (
+                        <SidebarMenuSubItem key={item.id}>
+                          <SidebarMenuSubButton 
+                            asChild 
+                            className="cursor-grab active:cursor-grabbing"
+                          >
+                            <a 
+                              href={item.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => {
+                                // If on spaces, select as tool instead of opening
+                                if (pathname === "/spaces") {
+                                  e.preventDefault()
+                                  handleLinkClick(e, item.sourceUrl, item.summary || "Link")
+                                }
+                              }}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, item.sourceUrl, item.summary || "Link", item.id)}
+                              title={item.summary || item.sourceUrl}
+                            >
+                              <LinkIcon className="w-3 h-3 mr-2 opacity-70" />
+                              <span className="truncate">{item.summary || "Untitled Link"}</span>
+                            </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       ))}

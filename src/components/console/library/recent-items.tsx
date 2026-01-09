@@ -91,13 +91,7 @@ export default function RecentView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Recently Added</h1>
-          <p className="text-muted-foreground">
-            Your most recently saved knowledge items
-          </p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button
           variant="outline"
           size="sm"

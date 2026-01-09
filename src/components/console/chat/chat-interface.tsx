@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { History, ArrowLeft } from "lucide-react"
-import { Button } from "@/src/components/ui/button"
 import { ChatMessage } from "./chat-message"
 import { ChatHistoryDrawer } from "./chat-history-drawer"
 import { Reasoning, ReasoningTrigger, ReasoningContent } from "../chat/reasoning"
@@ -14,6 +12,7 @@ import { useWorkspace } from "@/src/context/workspace-context"
 import { useSidebar } from "@/src/components/ui/sidebar"
 import { useAuth } from "@/src/context/auth-context"
 import { motion } from "motion/react"
+import { useChatUI } from "@/src/context/chat-ui-context"
 import type { Conversation, Message, ChatContextType } from "@/src/types/chat.types"
 import { toast } from "sonner"
 
@@ -35,7 +34,7 @@ export function ChatInterface({
     initialConversationId || null
   )
   const [messages, setMessages] = useState<Message[]>([])
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const { isHistoryOpen, setIsHistoryOpen } = useChatUI()
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingConversations, setIsLoadingConversations] = useState(false)
   const [isThinking, setIsThinking] = useState(false)
@@ -221,42 +220,17 @@ export function ChatInterface({
     return "Let's Dive Deep"
   }
 
-  const headerContent = (
-    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push(effectiveWorkspaceId ? `/home/${effectiveWorkspaceId}` : '/home')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold">{currentWorkspace?.name || "Chat"}</h1>
-          {currentWorkspace?.description && (
-            <p className="text-xs text-muted-foreground line-clamp-1">{currentWorkspace.description}</p>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsHistoryOpen(true)}
-        >
-          <History className="h-5 w-5" />
-        </Button>
-      </div>
-    </div>
-  )
-
   return (
     <div className="flex flex-col h-full relative bg-background overflow-hidden">
 
       {messages.length === 0 && !isLoading ? (
 
         <div className="h-full relative w-full overflow-hidden">
-          {headerContent}
+          
           <div 
             className="absolute flex flex-col items-center justify-center transition-all duration-250 ease-linear" 
             style={{ 
-              top: 'calc(50% - 200px)',
+              top: 'calc(50% - 160px)',
               left: 0,
               width: '100%',
             }}
@@ -302,7 +276,7 @@ export function ChatInterface({
       ) : (
 
         <>
-          {headerContent}
+          
           <div
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto min-h-0 pb-32"

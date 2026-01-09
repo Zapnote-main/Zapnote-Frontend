@@ -90,7 +90,7 @@ export default function ChatPage() {
             <div 
                 className="absolute flex flex-col items-center justify-center transition-all duration-250 ease-linear" 
                 style={{ 
-                    top: 'calc(50% - 200px)',
+                    top: 'calc(50% - 160px)',
                     left: sidebarWidth,
                     width: `calc(100% - ${sidebarWidth})`,
                     paddingRight: rightMargin,

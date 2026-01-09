@@ -64,13 +64,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="w-full h-full">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
-        <p className="text-muted-foreground">
-          Manage your workspaces and knowledge base
-        </p>
-      </div>
+    <div className="w-full h-full mt-4">
 
       <div className={`grid grid-cols-1 gap-6 ${open ? 'xl:grid-cols-3' : 'lg:grid-cols-3'}`}>
         {/* Left Column - 2/3 width */}

@@ -92,13 +92,7 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
-      <div className="shrink-0">
-        <h1 className="text-3xl font-bold mb-2">Search</h1>
-        <p className="text-muted-foreground">
-          Search across your knowledge base in {currentWorkspace.name}
-        </p>
-      </div>
+    <div className="space-y-6 h-full flex flex-col mt-4">
 
       <Card className="p-6 shrink-0">
         <div className="space-y-4">

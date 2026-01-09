@@ -299,6 +299,16 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [recentItems, currentWorkspace, refreshRecentItems]);
 
+  // Load items and members when current workspace changes
+  useEffect(() => {
+    if (currentWorkspace) {
+      refreshRecentItems(currentWorkspace.id);
+      refreshMembers(currentWorkspace.id);
+    } else {
+      setRecentItems([]);
+    }
+  }, [currentWorkspace, refreshRecentItems, refreshMembers]);
+
   const value = {
     workspaces,
     currentWorkspace,

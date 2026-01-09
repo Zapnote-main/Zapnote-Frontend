@@ -92,12 +92,6 @@ export default function CategoryView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Library by Category</h1>
-        <p className="text-muted-foreground">
-          Browse your knowledge items organized by content type
-        </p>
-      </div>
 
       <div className="w-full">
         <Tabs value={selectedType} onValueChange={(v) => setSelectedType(v as ContentType)} className="w-full">

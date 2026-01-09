@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, MessageSquare } from "lucide-react"
 import { Button } from "@/src/components/ui/button"
 import { LoaderThree } from "@/src/components/ui/loader"
-import { KnowledgeItemCard } from "@/src/components/console/workspace/knowledge-item-card"
+import { DraggableKnowledgeItemCard } from "@/src/components/console/workspace/knowledge-item-card"
 import { AddLinkDialog } from "@/src/components/console/home/add-link-dialog"
 import { useWorkspace } from "@/src/context/workspace-context"
 import { useSidebar } from "@/src/components/ui/sidebar"
@@ -44,7 +44,11 @@ export default function WorkspacePage({ params }: { params: Promise<{ workspaceI
     )
   }
 
-  if (!currentWorkspace && !loading && workspaces.length > 0) {
+  // Check if workspace exists
+  const workspaceExists = workspaces.some(w => w.id === workspaceId);
+  const isSwitchingWorkspace = currentWorkspace?.id !== workspaceId;
+
+  if (!loading && workspaces.length > 0 && !workspaceExists) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
         <p>Workspace not found</p>
@@ -55,7 +59,8 @@ export default function WorkspacePage({ params }: { params: Promise<{ workspaceI
     )
   }
 
-  if (!currentWorkspace) {
+  // Initial loading state or switching workspaces
+  if (!currentWorkspace || (isSwitchingWorkspace && workspaceExists)) {
      return (
       <div className="fixed top-[calc(50vh-2.5rem)] left-[calc(50vw-2.5rem)]">
         <LoaderThree />
@@ -64,32 +69,7 @@ export default function WorkspacePage({ params }: { params: Promise<{ workspaceI
   }
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
-      <div className="flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/home')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">{currentWorkspace.name}</h1>
-            {currentWorkspace.description && (
-              <p className="text-muted-foreground">{currentWorkspace.description}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => router.push(`/chat?workspaceId=${workspaceId}&type=workspace`)}
-            className="gap-2"
-          >
-            <MessageSquare className="h-4 w-4" />
-            Chat
-          </Button>
-          {currentWorkspace.role !== 'VIEWER' && <AddLinkDialog workspaceId={workspaceId} />}
-        </div>
-      </div>
-
+    <div className="space-y-6 h-full flex flex-col pt-4">
       <div className="flex-1 overflow-y-auto min-h-0">
         {itemsLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -103,7 +83,7 @@ export default function WorkspacePage({ params }: { params: Promise<{ workspaceI
         ) : (
           <div className={`grid grid-cols-1 gap-4 pb-6 ${open ? 'lg:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
             {recentItems.map((item) => (
-              <KnowledgeItemCard key={item.id} item={item} />
+              <DraggableKnowledgeItemCard key={item.id} item={item} />
             ))}
           </div>
         )}

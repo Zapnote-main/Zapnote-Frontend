@@ -141,12 +141,6 @@ export default function TimelineView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Timeline View</h1>
-        <p className="text-muted-foreground">
-          Your knowledge items organized chronologically
-        </p>
-      </div>
 
       {items.length === 0 ? (
         <Card className="h-96 flex items-center justify-center">
