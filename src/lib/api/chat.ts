@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Conversation, Message } from '@/src/types/chat.types';
+import type { Conversation, SendMessageResult } from '@/src/types/chat.types';
 import type { ApiResponse } from '@/src/types/workspace';
 
 export interface CreateConversationInput {
@@ -36,12 +36,13 @@ export const chatApi = {
     return response.data;
   },
 
+  /** Returns both the persisted user message and the assistant's reply. */
   async sendMessage(
     workspaceId: string,
     conversationId: string,
     input: SendMessageInput
-  ): Promise<Message> {
-    const response = await apiClient.post<ApiResponse<Message>>(
+  ): Promise<SendMessageResult> {
+    const response = await apiClient.post<ApiResponse<SendMessageResult>>(
       `/api/v1/workspaces/${workspaceId}/chat/${conversationId}/messages`,
       input
     );
@@ -52,40 +53,5 @@ export const chatApi = {
     await apiClient.delete<ApiResponse<null>>(
       `/api/v1/workspaces/${workspaceId}/chat/${conversationId}`
     );
-  },
-
-  async streamMessage(
-    workspaceId: string,
-    conversationId: string,
-    input: SendMessageInput,
-    onChunk: (chunk: string) => void
-  ): Promise<Message> {
-    const message = await this.sendMessage(workspaceId, conversationId, input);
-    
-    const content = message.content || ""; 
-    const chunkSize = 10; 
-    let currentIndex = 0;
-
-    return new Promise<Message>((resolve) => {
-      if (content.length === 0) {
-        resolve(message);
-        return;
-      }
-
-      const streamInterval = setInterval(() => {
-        if (currentIndex < content.length) {
-          currentIndex = Math.min(currentIndex + chunkSize, content.length);
-          onChunk(content.slice(0, currentIndex));
-          
-          if (currentIndex >= content.length) {
-             clearInterval(streamInterval);
-             resolve(message);
-          }
-        } else {
-          clearInterval(streamInterval);
-          resolve(message);
-        }
-      }, 20);
-    });
   },
 };

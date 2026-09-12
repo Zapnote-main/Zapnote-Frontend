@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import { useAuth } from "./auth-context"
+import { useWorkspace } from "./workspace-context"
 
 interface SocketContextType {
   socket: Socket | null
@@ -13,6 +14,7 @@ const SocketContext = createContext<SocketContextType | undefined>(undefined)
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
+  const { currentWorkspace } = useWorkspace()
   const [socket, setSocket] = useState<Socket | null>(null)
   const [socketUserId, setSocketUserId] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -67,6 +69,25 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [user])
+
+  const workspaceId = currentWorkspace?.id
+
+  // Server-side events are emitted to a `workspace:<id>` room, so without joining
+  // it nothing reaches this client. Room membership is per-connection and lost on
+  // reconnect, so re-join on every `connect` rather than only once.
+  useEffect(() => {
+    if (!socket || !workspaceId) return
+
+    const subscribe = () => socket.emit("subscribe:workspace", workspaceId)
+
+    if (socket.connected) subscribe()
+    socket.on("connect", subscribe)
+
+    return () => {
+      socket.off("connect", subscribe)
+      if (socket.connected) socket.emit("unsubscribe:workspace", workspaceId)
+    }
+  }, [socket, workspaceId])
 
   const effectiveSocket = user && socketUserId === user.uid ? socket : null
   const effectiveIsConnected = user && socketUserId === user.uid ? isConnected : false

@@ -6,12 +6,14 @@ import { WorkspaceProvider } from "@/src/context/workspace-context"
 import { ChatUIProvider } from "@/src/context/chat-ui-context"
 import { AuthGuard } from "@/src/components/auth/auth-guard"
 import { SocketProvider } from "@/src/context/socket-context"
+import { WorkspaceRealtimeSync } from "@/src/context/workspace-realtime-sync"
 
 export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <WorkspaceProvider>
         <SocketProvider>
+          <WorkspaceRealtimeSync />
           <SpacesProvider>
           <ChatUIProvider>
             <SidebarProvider>

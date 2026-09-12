@@ -37,24 +37,31 @@ export function SpacesProvider({ children }: { children: React.ReactNode }) {
   
   const { socket } = useSocket()
 
-  // Socket listener for space deletion - backend handles room management automatically
+  // These events are delivered to the workspace:<id> room, so membership already
+  // scopes them to this workspace. The old guard compared data.workspaceId, which
+  // the server never sends, so every space event was silently dropped.
   useEffect(() => {
     if (!socket || !currentWorkspace) return
 
-    const handleSpaceDeleted = (data: { workspaceId: string, spaceId: string }) => {
-      console.log('Socket received space:deleted', data)
-      if (data.workspaceId === currentWorkspace.id) {
-        setSpaces(prev => prev.filter(s => s.id !== data.spaceId))
-        if (currentSpace?.id === data.spaceId) {
-          setCurrentSpace(null)
-          toast.info("This space was deleted by another user")
-        }
+    const handleSpaceCreated = (space: Space) => {
+      if (!space?.id) return
+      setSpaces(prev => (prev.some(s => s.id === space.id) ? prev : [...prev, space]))
+    }
+
+    const handleSpaceDeleted = (data: { spaceId: string }) => {
+      if (!data?.spaceId) return
+      setSpaces(prev => prev.filter(s => s.id !== data.spaceId))
+      if (currentSpace?.id === data.spaceId) {
+        setCurrentSpace(null)
+        toast.info("This space was deleted by another user")
       }
     }
 
+    socket.on('space:created', handleSpaceCreated)
     socket.on('space:deleted', handleSpaceDeleted)
 
     return () => {
+      socket.off('space:created', handleSpaceCreated)
       socket.off('space:deleted', handleSpaceDeleted)
     }
   }, [socket, currentWorkspace, currentSpace])
