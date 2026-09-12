@@ -15,12 +15,39 @@ import { motion } from "motion/react"
 import { useChatUI } from "@/src/context/chat-ui-context"
 import type { Conversation, Message, ChatContextType } from "@/src/types/chat.types"
 import { toast } from "sonner"
+import { useRevealedMessage } from "@/src/hooks/use-revealed-message"
 
 interface ChatInterfaceProps {
   workspaceId?: string
   sourceItemId?: string
   conversationId?: string
   chatContext: ChatContextType
+}
+
+/**
+ * Places a persisted message into the list without ever producing a duplicate id.
+ *
+ * `replaceId` is the optimistic placeholder to swap out. If the real message is
+ * somehow already present (a refetch or another tab got there first) it is updated
+ * in place instead of appended, since two children with the same key is both a React
+ * warning and a source of duplicated bubbles.
+ */
+function commitMessage(list: Message[], message: Message, replaceId?: string): Message[] {
+  const existingIndex = list.findIndex((m) => m.id === message.id)
+
+  if (existingIndex !== -1) {
+    const updated = list.map((m, i) => (i === existingIndex ? message : m))
+    return replaceId ? updated.filter((m) => m.id !== replaceId) : updated
+  }
+
+  if (replaceId) {
+    const placeholderIndex = list.findIndex((m) => m.id === replaceId)
+    if (placeholderIndex !== -1) {
+      return list.map((m, i) => (i === placeholderIndex ? message : m))
+    }
+  }
+
+  return [...list, message]
 }
 
 export function ChatInterface({
@@ -41,6 +68,8 @@ export function ChatInterface({
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+  const { revealing, reveal, cancel: cancelReveal } = useRevealedMessage()
 
   const { currentWorkspace } = useWorkspace()
   const { state } = useSidebar()
@@ -86,7 +115,7 @@ export function ChatInterface({
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, scrollToBottom])
+  }, [messages, revealing, scrollToBottom])
 
   const handleSendMessage = async (content: string, sourceItemIds?: string[]) => {
     if (!effectiveWorkspaceId) {
@@ -131,7 +160,7 @@ export function ChatInterface({
     setIsThinking(true)
 
     try {
-      const responseMessage = await chatApi.sendMessage(
+      const { userMessage, assistantMessage } = await chatApi.sendMessage(
         effectiveWorkspaceId,
         convId,
         { message: content, sourceItemIds: effectiveSourceItemIds }
@@ -139,26 +168,31 @@ export function ChatInterface({
 
       setIsThinking(false)
 
-      setMessages((prev) => {
-
-        const withoutTemp = prev.filter((m) => m.id !== tempUserMessage.id)
-        return [...withoutTemp, responseMessage]
-      })
-
-      const updatedConv = await chatApi.getConversation(effectiveWorkspaceId, convId)
-      setMessages(updatedConv.messages || [])
+      // Swap the optimistic message for the persisted one so it carries a real id.
+      setMessages((prev) => commitMessage(prev, userMessage, tempUserMessage.id))
 
       setConversations((prev) =>
         prev.map((c) =>
           c.id === convId
-            ? { ...c, lastMessage: responseMessage.content, updatedAt: responseMessage.createdAt }
+            ? {
+                ...c,
+                lastMessage: assistantMessage.content,
+                updatedAt: assistantMessage.createdAt,
+              }
             : c
         )
       )
+
+      // Reveal the reply, then commit it to the list. No refetch: the response
+      // already contains everything the list needs.
+      await reveal(assistantMessage)
+      setMessages((prev) => commitMessage(prev, assistantMessage))
+      cancelReveal()
     } catch (error) {
       console.error("Failed to send message:", error)
       toast.error("Failed to send message")
 
+      cancelReveal()
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMessage.id))
     } finally {
       setIsLoading(false)
@@ -169,6 +203,7 @@ export function ChatInterface({
   const handleSelectConversation = async (id: string) => {
     if (!effectiveWorkspaceId) return
 
+    cancelReveal()
     setActiveConversationId(id)
     setIsLoading(true)
 
@@ -223,7 +258,7 @@ export function ChatInterface({
   return (
     <div className="flex flex-col h-full relative bg-background overflow-hidden">
 
-      {messages.length === 0 && !isLoading ? (
+      {messages.length === 0 && !revealing && !isLoading ? (
 
         <div className="h-full relative w-full overflow-hidden">
           
@@ -288,6 +323,10 @@ export function ChatInterface({
                   message={msg}
                 />
               ))}
+
+              {revealing && (
+                <ChatMessage key={revealing.id} message={revealing} />
+              )}
 
               {isThinking && (
                 <div className="flex justify-start">

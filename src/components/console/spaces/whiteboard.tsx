@@ -84,12 +84,13 @@ export default function CollaborativeWhiteboard() {
   useEffect(() => {
     if (!socket || !currentSpace || !excalidrawAPI) return;
 
-    socket.emit('join-space', currentSpace.id);
+    socket.emit('subscribe:space', currentSpace.id);
 
     const handleElementCreated = (data: any) => {
         console.log('Socket received element:created', data);
         if (data.spaceId !== currentSpace.id) return;
-        const element = data.content; 
+        const element = data.element?.content;
+        if (!element) return;
         
         const sceneElements = excalidrawAPI.getSceneElements();
         if (sceneElements.some((el: any) => el.id === element.id)) {
@@ -104,7 +105,8 @@ export default function CollaborativeWhiteboard() {
     const handleElementUpdated = (data: any) => {
         console.log('Socket received element:updated/moved', data);
         if (data.spaceId !== currentSpace.id) return;
-        const element = data.content;
+        const element = data.element?.content;
+        if (!element) return;
         
         const sceneElements = excalidrawAPI.getSceneElements();
         const selectedIds = excalidrawAPI.getAppState().selectedElementIds;
@@ -145,7 +147,7 @@ export default function CollaborativeWhiteboard() {
     socket.on('element:deleted', handleElementDeleted);
 
     return () => {
-        socket.emit('leave-space', currentSpace.id);
+        socket.emit('unsubscribe:space', currentSpace.id);
         socket.off('element:created', handleElementCreated);
         socket.off('element:updated', handleElementUpdated);
         socket.off('element:moved', handleElementUpdated);

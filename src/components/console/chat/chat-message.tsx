@@ -49,7 +49,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <ExternalLink className="h-3 w-3" />
-                    {source.summary || 'Link'}
+                    {source.title || source.summary || 'Link'}
                   </a>
                 ))}
               </div>
@@ -84,7 +84,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 >
                   <ExternalLink className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground group-hover/source:text-primary" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{source.summary || 'Link'}</p>
+                    <p className="font-medium truncate">{source.title || source.summary || 'Link'}</p>
                     <p className="text-muted-foreground truncate">{source.sourceUrl}</p>
                   </div>
                 </a>

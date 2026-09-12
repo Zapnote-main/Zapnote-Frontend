@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { workspacesApi } from '@/src/lib/api/workspaces';
 import { knowledgeApi } from '@/src/lib/api/knowledge';
 import { useAuth } from './auth-context';
@@ -23,18 +23,18 @@ interface WorkspaceContextType {
   recentItems: KnowledgeItem[];
   loading: boolean;
   itemsLoading: boolean;
-  
+
   setCurrentWorkspace: (workspace: WorkspaceWithRole | null) => void;
   refreshWorkspaces: () => Promise<void>;
   createWorkspace: (input: CreateWorkspaceInput) => Promise<WorkspaceWithRole>;
   updateWorkspace: (workspaceId: string, input: UpdateWorkspaceInput) => Promise<void>;
   deleteWorkspace: (workspaceId: string) => Promise<void>;
-  
+
   refreshMembers: (workspaceId: string) => Promise<void>;
   addMember: (workspaceId: string, input: AddMemberInput) => Promise<void>;
   updateMemberRole: (workspaceId: string, memberId: string, role: UpdateMemberRoleInput) => Promise<void>;
   removeMember: (workspaceId: string, memberId: string) => Promise<void>;
-  
+
   refreshRecentItems: (workspaceId: string, silent?: boolean) => Promise<void>;
   createKnowledgeItem: (workspaceId: string, input: CreateKnowledgeItemInput) => Promise<KnowledgeItem>;
   updateKnowledgeItem: (workspaceId: string, itemId: string, input: { userIntent?: string }) => Promise<void>;
@@ -52,6 +52,17 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [itemsLoading, setItemsLoading] = useState(false);
 
+  // The mutation callbacks below need the *current* workspace but must keep stable
+  // identities: they are dependencies of effects that themselves set the current
+  // workspace, so rebuilding them on every change would loop. Reading through a ref
+  // gives them fresh values with empty dependency lists.
+  const currentWorkspaceRef = useRef<WorkspaceWithRole | null>(null);
+  useEffect(() => {
+    currentWorkspaceRef.current = currentWorkspace;
+  }, [currentWorkspace]);
+
+  const currentWorkspaceId = currentWorkspace?.id;
+
   const setCurrentWorkspace = useCallback((workspace: WorkspaceWithRole | null) => {
     setCurrentWorkspaceState(workspace);
     if (workspace) {
@@ -61,9 +72,42 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /**
+   * Applies a patch to one workspace in both the list and the current selection.
+   *
+   * Returns the previous state untouched when nothing actually changes. That bail-out
+   * matters: `currentWorkspace` is an effect dependency, so handing back a new object
+   * with identical values would retrigger that effect and refetch forever.
+   */
+  const patchWorkspace = useCallback(
+    (workspaceId: string, makePatch: (w: WorkspaceWithRole) => Partial<WorkspaceWithRole>) => {
+      const apply = (w: WorkspaceWithRole): WorkspaceWithRole => {
+        const patch = makePatch(w);
+        const changed = (Object.keys(patch) as (keyof WorkspaceWithRole)[]).some(
+          (k) => w[k] !== patch[k]
+        );
+        return changed ? { ...w, ...patch } : w;
+      };
+
+      setWorkspaces((prev) => {
+        let dirty = false;
+        const next = prev.map((w) => {
+          if (w.id !== workspaceId) return w;
+          const updated = apply(w);
+          if (updated !== w) dirty = true;
+          return updated;
+        });
+        return dirty ? next : prev;
+      });
+
+      setCurrentWorkspaceState((prev) => (prev && prev.id === workspaceId ? apply(prev) : prev));
+    },
+    []
+  );
+
   const refreshWorkspaces = useCallback(async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const data = await workspacesApi.getWorkspaces();
@@ -81,7 +125,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     if (workspaces.length > 0 && !currentWorkspace) {
       const savedId = localStorage.getItem('currentWorkspaceId');
       const savedWorkspace = workspaces.find(w => w.id === savedId);
-      
+
       if (savedWorkspace) {
         setCurrentWorkspaceState(savedWorkspace);
       } else {
@@ -108,7 +152,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     try {
       const updated = await workspacesApi.updateWorkspace(workspaceId, input);
       setWorkspaces(prev => prev.map(w => w.id === workspaceId ? updated : w));
-      if (currentWorkspace?.id === workspaceId) {
+      if (currentWorkspaceRef.current?.id === workspaceId) {
         setCurrentWorkspace(updated);
       }
       toast.success('Workspace updated successfully');
@@ -117,13 +161,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       toast.error('Failed to update workspace');
       throw error;
     }
-  }, [currentWorkspace]);
+  }, [setCurrentWorkspace]);
 
   const deleteWorkspace = useCallback(async (workspaceId: string) => {
     try {
       await workspacesApi.deleteWorkspace(workspaceId);
       setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
-      if (currentWorkspace?.id === workspaceId) {
+      if (currentWorkspaceRef.current?.id === workspaceId) {
         setCurrentWorkspace(null);
       }
       toast.success('Workspace deleted successfully');
@@ -132,22 +176,18 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       toast.error('Failed to delete workspace');
       throw error;
     }
-  }, [currentWorkspace]);
+  }, [setCurrentWorkspace]);
 
   const refreshMembers = useCallback(async (workspaceId: string) => {
     try {
       const data = await workspacesApi.getMembers(workspaceId);
       setMembers(prev => ({ ...prev, [workspaceId]: data }));
-      // update member count on workspace object if available
-      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, memberCount: data.length } : w));
-      if (currentWorkspace?.id === workspaceId) {
-        setCurrentWorkspaceState(prev => prev ? { ...prev, memberCount: data.length } : prev as any);
-      }
+      patchWorkspace(workspaceId, () => ({ memberCount: data.length }));
     } catch (error) {
       console.error('Failed to fetch members:', error);
       toast.error('Failed to load members');
     }
-  }, []);
+  }, [patchWorkspace]);
 
   const addMember = useCallback(async (workspaceId: string, input: AddMemberInput) => {
     try {
@@ -156,18 +196,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         [workspaceId]: [...(prev[workspaceId] || []), member]
       }));
-      // increment member count for the workspace
-      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, memberCount: (w.memberCount || 0) + 1 } : w));
-      if (currentWorkspace?.id === workspaceId) {
-        setCurrentWorkspaceState(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) + 1 } : prev as any);
-      }
+      patchWorkspace(workspaceId, (w) => ({ memberCount: (w.memberCount || 0) + 1 }));
       toast.success('Member added successfully');
     } catch (error) {
       console.error('Failed to add member:', error);
       toast.error('Failed to add member');
       throw error;
     }
-  }, []);
+  }, [patchWorkspace]);
 
   const updateMemberRole = useCallback(async (workspaceId: string, memberId: string, input: UpdateMemberRoleInput) => {
     try {
@@ -191,37 +227,20 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         [workspaceId]: (prev[workspaceId] || []).filter(m => m.id !== memberId)
       }));
-      // decrement member count for the workspace
-      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, memberCount: Math.max((w.memberCount || 1) - 1, 0) } : w));
-      if (currentWorkspace?.id === workspaceId) {
-        setCurrentWorkspaceState(prev => prev ? { ...prev, memberCount: Math.max((prev.memberCount || 1) - 1, 0) } : prev as any);
-      }
+      patchWorkspace(workspaceId, (w) => ({ memberCount: Math.max((w.memberCount || 1) - 1, 0) }));
       toast.success('Member removed');
     } catch (error) {
       console.error('Failed to remove member:', error);
       toast.error('Failed to remove member');
       throw error;
     }
-  }, []);
+  }, [patchWorkspace]);
 
   const refreshRecentItems = useCallback(async (workspaceId: string, silent = false) => {
     if (!silent) setItemsLoading(true);
     try {
       const items = await knowledgeApi.getRecentItems(workspaceId, 10);
       setRecentItems(items);
-      // update item count on workspace if the workspace is present
-      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, itemCount: Math.max(items.length, w.itemCount || 0) } : w));
-      
-      setCurrentWorkspaceState(prev => {
-        if (prev && prev.id === workspaceId) {
-          const newItemCount = Math.max(items.length, prev.itemCount || 0);
-          if (prev.itemCount === newItemCount) {
-            return prev;
-          }
-          return { ...prev, itemCount: newItemCount };
-        }
-        return prev;
-      });
     } catch (error) {
       console.error('Failed to fetch recent items:', error);
     } finally {
@@ -233,11 +252,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     try {
       const item = await knowledgeApi.createItem(workspaceId, input);
       setRecentItems(prev => [item, ...prev].slice(0, 10));
-      // increment item count for the workspace
-      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, itemCount: (w.itemCount || 0) + 1 } : w));
-      if (currentWorkspace?.id === workspaceId) {
-        setCurrentWorkspaceState(prev => prev ? { ...prev, itemCount: (prev.itemCount || 0) + 1 } : prev as any);
-      }
+      patchWorkspace(workspaceId, (w) => ({ itemCount: (w.itemCount || 0) + 1 }));
       toast.success('Link added successfully');
       return item;
     } catch (error) {
@@ -245,7 +260,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       toast.error('Failed to add link');
       throw error;
     }
-  }, []);
+  }, [patchWorkspace]);
 
   const updateKnowledgeItem = useCallback(async (workspaceId: string, itemId: string, input: { userIntent?: string }) => {
     try {
@@ -263,18 +278,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     try {
       await knowledgeApi.deleteItem(workspaceId, itemId);
       setRecentItems(prev => prev.filter(i => i.id !== itemId));
-      // decrement item count for the workspace
-      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? { ...w, itemCount: Math.max((w.itemCount || 1) - 1, 0) } : w));
-      if (currentWorkspace?.id === workspaceId) {
-        setCurrentWorkspaceState(prev => prev ? { ...prev, itemCount: Math.max((prev.itemCount || 1) - 1, 0) } : prev as any);
-      }
+      patchWorkspace(workspaceId, (w) => ({ itemCount: Math.max((w.itemCount || 1) - 1, 0) }));
       toast.success('Link deleted');
     } catch (error) {
       console.error('Failed to delete knowledge item:', error);
       toast.error('Failed to delete link');
       throw error;
     }
-  }, []);
+  }, [patchWorkspace]);
 
   useEffect(() => {
     if (user) {
@@ -282,9 +293,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, refreshWorkspaces]);
 
-  // Poll for processing items
+  // Fallback poll for processing items. WorkspaceRealtimeSync refreshes on the
+  // server's knowledge:updated event, so this only has to cover a dropped socket,
+  // which is why it is a slow safety net rather than a 3s loop.
   useEffect(() => {
-    if (!currentWorkspace) return;
+    if (!currentWorkspaceId) return;
 
     const hasProcessingItems = recentItems.some(
       item => item.status === 'PROCESSING' || item.status === 'PENDING'
@@ -292,22 +305,23 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
     if (hasProcessingItems) {
       const interval = setInterval(() => {
-        refreshRecentItems(currentWorkspace.id, true);
-      }, 3000);
+        refreshRecentItems(currentWorkspaceId, true);
+      }, 30000);
 
       return () => clearInterval(interval);
     }
-  }, [recentItems, currentWorkspace, refreshRecentItems]);
+  }, [recentItems, currentWorkspaceId, refreshRecentItems]);
 
-  // Load items and members when current workspace changes
+  // Load items and members when current workspace changes. This is the only place
+  // that fetches them on selection; pages must not repeat it.
   useEffect(() => {
-    if (currentWorkspace) {
-      refreshRecentItems(currentWorkspace.id);
-      refreshMembers(currentWorkspace.id);
+    if (currentWorkspaceId) {
+      refreshRecentItems(currentWorkspaceId);
+      refreshMembers(currentWorkspaceId);
     } else {
       setRecentItems([]);
     }
-  }, [currentWorkspace, refreshRecentItems, refreshMembers]);
+  }, [currentWorkspaceId, refreshRecentItems, refreshMembers]);
 
   const value = {
     workspaces,

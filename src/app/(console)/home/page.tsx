@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect } from "react"
 import { LoaderThree } from "@/src/components/ui/loader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card"
 import { CreateWorkspaceDialog } from "@/src/components/console/home/create-workspace-dialog"
@@ -20,16 +19,7 @@ export default function HomePage() {
     recentItems,
     loading,
     setCurrentWorkspace,
-    refreshRecentItems,
   } = useWorkspace()
-
-  const workspaceId = currentWorkspace?.id
-
-  useEffect(() => {
-    if (workspaceId) {
-      refreshRecentItems(workspaceId)
-    }
-  }, [workspaceId, refreshRecentItems])
 
   const calendarData = recentItems.reduce((acc, item) => {
     const dateKey = new Date(item.createdAt).toISOString().split('T')[0]
